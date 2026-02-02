@@ -1,113 +1,124 @@
 import streamlit as st
 import datetime
-import pytz # Tambahkan ini di requirements.txt nanti
+import pytz
 
 # 1. Konfigurasi Halaman
 st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
 
-# 2. CSS untuk Tampilan Mewah
+# 2. CSS Koreksi Total (Background & Font)
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Poppins:wght@400;600&display=swap');
 
-    /* Background Lab Baru yang lebih tajam */
+    /* Background Lab Baru - Pastikan Link Ini Stabil */
     .stApp {
-        background: linear-gradient(rgba(0, 20, 40, 0.6), rgba(0, 20, 40, 0.6)), 
-        url("https://images.unsplash.com/photo-1579152276508-4903328e469c?q=80&w=2070");
+        background: linear-gradient(rgba(0, 20, 40, 0.7), rgba(0, 20, 40, 0.7)), 
+        url("https://images.unsplash.com/photo-1532187875605-1807662899ad?q=80&w=2070");
         background-size: cover;
         background-position: center;
         background-attachment: fixed;
     }
 
-    /* Judul Super Gede ala Gambar 2 */
+    /* Judul Super Gede */
     .main-title {
         font-family: 'Orbitron', sans-serif;
         color: #ffffff;
-        font-size: 85px; /* Lebih Gede */
+        font-size: 80px; 
         font-weight: 700;
         letter-spacing: 15px;
         text-align: center;
-        margin: 20px 0 0 0;
-        text-shadow: 0px 0px 20px rgba(0, 255, 255, 0.5);
+        margin: 0;
+        text-shadow: 0px 0px 30px rgba(0, 255, 255, 0.6);
     }
 
-    /* Submenu Card Styling */
+    /* Card Sub Menu - Icon Gede & Transparan Blur */
     .menu-card {
-        background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(10px);
-        padding: 25px;
-        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(15px);
+        padding: 30px;
+        border-radius: 25px;
         text-align: center;
         color: white;
         font-family: 'Poppins', sans-serif;
-        margin-bottom: 20px;
-        height: 200px;
+        margin-bottom: 25px;
+        height: 220px;
         border: 1px solid rgba(255, 255, 255, 0.2);
-        transition: 0.4s;
+        transition: 0.5s ease;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
     }
     
     .menu-card:hover {
-        background: rgba(38, 196, 185, 0.4);
-        transform: translateY(-10px);
+        background: rgba(38, 196, 185, 0.5);
+        transform: scale(1.05);
+        border: 1px solid #26c4b9;
     }
 
-    /* Icon Gede, Teks Sedang */
     .menu-icon {
-        font-size: 60px; /* Icon di-BOOM gedein */
-        margin-bottom: 10px;
+        font-size: 70px; /* Icon Dibikin Gede Banget */
+        margin-bottom: 15px;
     }
     
     .menu-text {
-        font-size: 18px; /* Ukuran pas, gak kekecilan gak kegedean */
+        font-size: 18px; 
         font-weight: 600;
-        letter-spacing: 1px;
+        text-transform: uppercase;
     }
 
-    .logo-container img {
-        height: 60px;
-        margin: 0 15px;
-        filter: drop-shadow(2px 2px 5px rgba(0,0,0,0.3));
+    /* Logo Perusahaan */
+    .logo-img {
+        height: 50px;
+        margin: 0 10px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Logika Jam Realtime (WIB)
+# 3. Logika Jam Realtime (WIB - Asia/Jakarta)
 tz = pytz.timezone('Asia/Jakarta')
 now = datetime.datetime.now(tz)
 tgl_skrg = now.strftime("%d %B %Y")
-jam_skrg = now.strftime("%H:%M:%S WIB")
+jam_skrg = now.strftime("%H:%M:%S")
 
-# 4. Header: Logo Perusahaan & Jam
-col_logo, col_time = st.columns([2, 1])
+# 4. Header: Logo & Waktu
+col_l, col_r = st.columns([2, 1])
 
-with col_logo:
-    st.markdown(f"""
-        <div class="logo-container" style="display: flex; align-items: center;">
-            <img src="https://raw.githubusercontent.com/Lily-yulinar/CaneMetrix2.0/main/logo_lpp.png" alt="LPP">
-            <img src="https://raw.githubusercontent.com/Lily-yulinar/CaneMetrix2.0/main/logo_ptpn.png" alt="PTPN">
-            <img src="https://raw.githubusercontent.com/Lily-yulinar/CaneMetrix2.0/main/logo_sgn.png" alt="SGN">
+with col_l:
+    # Pakai placeholder logo jika file belum diupload ke github
+    st.markdown("""
+        <div style="display: flex; align-items: center; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 10px; width: fit-content;">
+            <span style="color: white; font-weight: bold; margin-right: 10px;">PARTNERS:</span>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Logo_PTPN_III_%28Persero%29.svg/1200px-Logo_PTPN_III_%28Persero%29.svg.png" class="logo-img">
+            <img src="https://sgn.co.id/assets/img/logo-sgn.png" class="logo-img">
         </div>
     """, unsafe_allow_html=True)
 
-with col_time:
-    shift = st.selectbox("", ["SHIFT 1", "SHIFT 2", "SHIFT 3"], index=0)
-    st.markdown(f'<p style="color:white; text-align:right; font-weight:bold; font-size:18px;">{tgl_skrg}<br>{jam_skrg}</p>', unsafe_allow_html=True)
+with col_r:
+    shift = st.selectbox("", ["SHIFT 1", "SHIFT 2", "SHIFT 3"], label_visibility="collapsed")
+    st.markdown(f"""
+        <div style="text-align: right; color: white; font-family: 'Poppins';">
+            <span style="font-size: 18px; font-weight: bold;">{tgl_skrg}</span><br>
+            <span style="font-size: 22px; color: #26c4b9; font-weight: bold;">{jam_skrg} WIB</span>
+        </div>
+    """, unsafe_allow_html=True)
 
-# 5. Judul Aplikasi
+# 5. Body Utama
+st.markdown('<p style="text-align: center; color: white; margin-bottom: 0;">Welcome, Planters!</p>', unsafe_allow_html=True)
 st.markdown('<h1 class="main-title">CANE METRIX</h1>', unsafe_allow_html=True)
-st.markdown('<p style="color:#26c4b9; text-align:center; font-style:italic; font-size:22px; margin-bottom:40px;">Accelerating QA Performance</p>', unsafe_allow_html=True)
+st.markdown('<p style="color:#26c4b9; text-align:center; font-style:italic; font-size:20px; margin-bottom:40px;">Accelerating QA Performance</p>', unsafe_allow_html=True)
 
-# 6. Grid Menu (Icon Gede)
-c1, c2, c3 = st.columns(3)
+# 6. Grid Menu
+m1, m2, m3 = st.columns(3)
 
-menus = [
-    ("📋", "INPUT DATA"), ("📅", "DATABASE HARIAN"), ("📊", "DATABASE BULANAN"),
-    ("⚖️", "REKAP STASIUN"), ("🧮", "HITUNG"), ("👤", "AKUN"),
-    ("📈", "TREND"), ("⚙️", "PENGATURAN"), ("📥", "EXPORT DATA")
+items = [
+    ("📋", "Input Data"), ("📅", "Database Harian"), ("📊", "Database Bulanan"),
+    ("⚖️", "Rekap Stasiun"), ("🧮", "Hitung"), ("👤", "Akun"),
+    ("📈", "Trend"), ("⚙️", "Pengaturan"), ("📥", "Export Data")
 ]
 
-for i, (icon, text) in enumerate(menus):
-    with [c1, c2, c3][i % 3]:
+for i, (icon, text) in enumerate(items):
+    with [m1, m2, m3][i % 3]:
         st.markdown(f"""
             <div class="menu-card">
                 <div class="menu-icon">{icon}</div>
@@ -117,7 +128,8 @@ for i, (icon, text) in enumerate(menus):
 
 # 7. Status Bar
 st.markdown(f"""
-    <div style="background: #26c4b9; padding: 15px; border-radius: 15px; text-align: center; color: white; font-weight: bold; font-size: 22px; margin-top:30px;">
-        Jumlah sampel masuk hari ini: *45
+    <div style="background: linear-gradient(90deg, #26c4b9, #1a4a7a); padding: 15px; border-radius: 15px; text-align: center; color: white; font-weight: bold; font-size: 22px; margin-top:20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+        Jumlah sampel masuk hari ini: 45
     </div>
+    <p style="text-align: center; color: rgba(255,255,255,0.5); font-size: 12px; margin-top: 10px;">CaneMetrix 2.0 &copy; 2026 | Server Status: Online</p>
     """, unsafe_allow_html=True)
