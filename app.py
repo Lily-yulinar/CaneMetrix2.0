@@ -1,107 +1,119 @@
 import streamlit as st
 import datetime
+import time
 
 # 1. Konfigurasi Halaman
 st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
 
-# 2. CSS untuk Background Gambar Lab dan Styling Menu
+# 2. CSS Canggih (Background Lab, Font Orbitron, & Styling)
 st.markdown("""
     <style>
-    /* Mengatur background utama dengan gambar lab */
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@400;700&display=swap');
+
+    /* Background lab transparan */
     .stApp {
-        background: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), 
-        url("https://images.unsplash.com/photo-1581093588401-fbb62a02f120?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80");
+        background: linear-gradient(rgba(10, 40, 70, 0.7), rgba(10, 40, 70, 0.7)), 
+        url("https://images.unsplash.com/photo-1581093588401-fbb62a02f120?q=80&w=2070");
         background-size: cover;
+        background-position: center;
         background-attachment: fixed;
     }
     
-    /* Header styling */
-    .header-container {
-        background-color: #1a4a7a;
-        padding: 20px;
-        border-radius: 10px;
+    /* Judul ala Gambar 2 */
+    .main-title {
+        font-family: 'Orbitron', sans-serif;
         color: white;
+        font-size: 60px;
+        font-weight: 700;
+        letter-spacing: 12px;
         text-align: center;
-        margin-bottom: 25px;
-        position: relative;
+        margin-top: 10px;
+        text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
     }
-    
-    /* Card/Kotak Menu styling */
-    .menu-card {
-        background-color: #7ab8e1;
-        padding: 30px;
-        border-radius: 15px;
+
+    .sub-title {
+        font-family: 'Roboto', sans-serif;
+        color: #26c4b9;
         text-align: center;
-        color: white;
-        font-weight: bold;
-        font-size: 18px;
-        margin-bottom: 20px;
-        height: 140px;
+        font-style: italic;
+        margin-bottom: 30px;
+        font-size: 20px;
+    }
+
+    /* Card Sub Menu - Font Gede & Menarik */
+    .menu-card {
+        background: rgba(122, 184, 225, 0.9); /* Transparansi biar estetik */
+        padding: 35px 20px;
+        border-radius: 20px;
+        text-align: center;
+        color: #ffffff;
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        font-size: 24px; /* Font lebih gede */
+        margin-bottom: 25px;
+        height: 180px;
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        box-shadow: 4px 4px 15px rgba(0,0,0,0.2);
-        transition: transform 0.3s;
-        cursor: pointer;
+        border: 2px solid rgba(255,255,255,0.2);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        transition: 0.3s;
     }
     
     .menu-card:hover {
-        transform: scale(1.05);
-        background-color: #5ba4d6;
+        background: #26c4b9;
+        transform: translateY(-10px);
+        box-shadow: 0 12px 40px 0 rgba(38, 196, 185, 0.5);
     }
-    
-    .dark-card {
-        background-color: #3d7fb3;
-    }
-    
-    /* Info Bar di bawah */
-    .info-bar {
-        background-color: #26c4b9;
+
+    /* Header Info */
+    .header-info {
         color: white;
-        padding: 15px;
-        border-radius: 10px;
-        text-align: center;
-        font-weight: bold;
-        font-size: 20px;
+        font-family: 'Roboto', sans-serif;
+        font-size: 18px;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. Header Section (Nama, Tanggal, Shift)
-today = datetime.datetime.now().strftime("%d %B %Y")
-st.markdown(f"""
-    <div class="header-container">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div style="text-align: left;">Welcome, Planters!</div>
-            <div style="text-align: right;">{today} <br> <span style="background:#26c4b9; padding:2px 10px; border-radius:5px;">SHIFT I</span></div>
-        </div>
-        <h1 style="margin:10px 0; letter-spacing: 8px; font-family: sans-serif;">CANE METRIX</h1>
-        <p style="margin:0; font-style: italic;">Accelerating QA Performance</p>
+# 3. Fitur Jam & Kalender Realtime (Placeholder)
+# Note: Realtime detik di web butuh sedikit trik JavaScript, 
+# tapi ini versi Python yang update tiap refresh/interaksi.
+now = datetime.datetime.now()
+tgl_skrg = now.strftime("%d %B %Y")
+jam_skrg = now.strftime("%H:%M:%S WIB")
+
+# 4. Header Section
+col_head1, col_head2 = st.columns([2, 1])
+
+with col_head1:
+    st.markdown('<p class="header-info">Welcome, Planters!</p>', unsafe_allow_html=True)
+with col_head2:
+    # Opsi Shift (Pake Selectbox biar fungsional)
+    shift = st.selectbox("", ["SHIFT 1", "SHIFT 2", "SHIFT 3"], index=0)
+    st.markdown(f'<p style="color:white; text-align:right; font-weight:bold;">{tgl_skrg}<br>{jam_skrg}</p>', unsafe_allow_html=True)
+
+st.markdown('<h1 class="main-title">CANE METRIX</h1>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">Accelerating QA Performance</p>', unsafe_allow_html=True)
+
+# 5. Grid Menu dengan Komposisi Warna Setara
+# Kita bagi jadi 3 kolom
+c1, c2, c3 = st.columns(3)
+
+menu_items = [
+    ("📝", "INPUT DATA"), ("📅", "DATABASE HARIAN"), ("📊", "DATABASE BULANAN"),
+    ("⚖️", "REKAP STASIUN"), ("🧮", "HITUNG"), ("👤", "AKUN"),
+    ("📈", "TREND"), ("⚙️", "PENGATURAN"), ("📥", "EXPORT DATA")
+]
+
+for i, (icon, text) in enumerate(menu_items):
+    with [c1, c2, c3][i % 3]:
+        st.markdown(f'<div class="menu-card">{icon}<br><br>{text}</div>', unsafe_allow_html=True)
+
+# 6. Footer Status
+st.markdown("---")
+st.markdown("""
+    <div style="background-color: #26c4b9; padding: 15px; border-radius: 15px; text-align: center; color: white; font-weight: bold; font-size: 22px;">
+        Jumlah sampel masuk hari ini: *45
     </div>
     """, unsafe_allow_html=True)
-
-# 4. Grid Menu 3x3
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.markdown('<div class="menu-card">📋<br>Input Data</div>', unsafe_allow_html=True)
-    st.markdown('<div class="menu-card dark-card">⚖️<br>Rekap Stasiun</div>', unsafe_allow_html=True)
-    st.markdown('<div class="menu-card">📈<br>Trend</div>', unsafe_allow_html=True)
-
-with col2:
-    st.markdown('<div class="menu-card dark-card">📅<br>Database Harian</div>', unsafe_allow_html=True)
-    st.markdown('<div class="menu-card">🧮<br>Hitung</div>', unsafe_allow_html=True)
-    st.markdown('<div class="menu-card">⚙️<br>Pengaturan</div>', unsafe_allow_html=True)
-
-with col3:
-    st.markdown('<div class="menu-card">📊<br>Database Bulanan</div>', unsafe_allow_html=True)
-    st.markdown('<div class="menu-card">👤<br>Akun</div>', unsafe_allow_html=True)
-    st.markdown('<div class="menu-card dark-card">📥<br>Export/Import Data</div>', unsafe_allow_html=True)
-
-st.write("") # Spasi
-
-# 5. Footer / Status Sampel
-st.markdown('<div class="info-bar">Jumlah sampel masuk hari ini: *45</div>', unsafe_allow_html=True)
-
-st.markdown("<p style='text-align: right; color: gray; margin-top:10px;'>Status Server: <span style='color: green;'>● OK</span></p>", unsafe_allow_html=True)
