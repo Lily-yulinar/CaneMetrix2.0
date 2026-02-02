@@ -5,7 +5,7 @@ from streamlit_autorefresh import st_autorefresh
 import base64
 import os
 
-# --- INITIAL CONFIG ---
+# --- KONFIGURASI HALAMAN ---
 st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
 st_autorefresh(interval=1000, key="datarefresh")
 
@@ -26,7 +26,7 @@ logo_sgn = get_base64_logo("sgn.png")
 logo_lpp = get_base64_logo("lpp.png")
 logo_cane = get_base64_logo("canemetrix.png")
 
-# --- CSS SUPER POP-UP & GIANT LOGO ---
+# --- CSS TUNING (BIAR KELIHATAN) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Poppins:wght@400;700&display=swap');
@@ -37,132 +37,125 @@ st.markdown(f"""
         background-size: cover; background-position: center; background-attachment: fixed;
     }}
 
-    /* Partner Logos - No Box, Just Large & Clean */
-    .partner-wrapper {{
-        display: flex;
+    /* KOTAK LOGO PARTNER (Putih Transparan biar logo kelihatan jelas) */
+    .partner-box {{
+        background: rgba(255, 255, 255, 0.9); /* Putih pekat dikit biar warna logo muncul */
+        padding: 15px 30px;
+        border-radius: 20px;
+        display: inline-flex;
         align-items: center;
-        gap: 40px;
-        padding: 20px 0;
+        gap: 30px;
+        box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        margin-bottom: 10px;
     }}
-    .img-giant-partner {{ height: 75px; width: auto; filter: drop-shadow(0 0 10px rgba(255,255,255,0.3)); }}
+    .img-partner {{ height: 55px; width: auto; object-fit: contain; }}
 
-    /* Main Title Box - Full Impact */
+    /* KOTAK JUDUL UTAMA */
     .hero-container {{
         background: rgba(255, 255, 255, 0.05);
         backdrop-filter: blur(25px);
         -webkit-backdrop-filter: blur(25px);
-        border: 2px solid rgba(38, 196, 185, 0.3);
-        border-radius: 50px;
-        padding: 80px 20px;
-        margin: 50px auto;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 40px;
+        padding: 60px 20px;
+        margin: 30px auto;
         text-align: center;
-        box-shadow: 0 0 50px rgba(0, 0, 0, 0.6);
+        box-shadow: 0 25px 50px rgba(0,0,0,0.5);
     }}
 
-    .logo-cane-giant {{ 
-        height: 320px; /* INI BARU GEDE BEB! */
-        margin-bottom: 30px; 
-        filter: drop-shadow(0 0 30px rgba(38, 196, 185, 1)); 
-    }}
-    
-    .giant-title {{ 
-        font-family: 'Orbitron'; 
-        color: #ffffff; 
-        font-size: 110px; /* Ukuran Judul Raksasa */
-        font-weight: 900;
-        letter-spacing: 20px; 
-        margin: 0;
-        text-shadow: 0 0 30px rgba(0, 255, 255, 0.8), 0 0 60px rgba(0, 255, 255, 0.4);
-        line-height: 1.2;
+    /* LOGO CANEMETRIX (Glow Effect) */
+    .main-logo-glow {{
+        height: 220px; /* Ukuran Proposional Gede */
+        margin-bottom: 20px;
+        filter: drop-shadow(0 0 15px rgba(38, 196, 185, 0.8));
     }}
 
-    .giant-subtitle {{ 
-        color: #26c4b9; 
-        font-family: 'Poppins'; 
-        font-weight: 700; 
-        font-size: 30px; /* Subtitle juga gue gedein */
-        letter-spacing: 10px; 
+    .title-text {{
+        font-family: 'Orbitron'; color: #ffffff;
+        font-size: 80px; letter-spacing: 15px; margin: 10px 0;
+        text-shadow: 0 0 30px rgba(38, 196, 185, 1);
+    }}
+
+    .sub-text {{
+        color: #26c4b9; font-family: 'Poppins';
+        font-weight: 700; font-size: 20px; letter-spacing: 8px;
         text-transform: uppercase;
-        margin-top: 15px;
     }}
 
-    /* Sub Menu - Tetap Cakep */
+    /* SUB-MENU CARDS */
     .menu-card {{
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(15px);
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(10px);
         padding: 40px 20px;
         border-radius: 30px;
         text-align: center;
         color: white;
-        height: 280px;
+        height: 260px;
         border: 1px solid rgba(255, 255, 255, 0.1);
-        transition: 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transition: 0.5s;
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
     }}
-    
     .menu-card:hover {{
-        background: rgba(38, 196, 185, 0.4);
-        transform: scale(1.05);
+        background: rgba(38, 196, 185, 0.25);
+        transform: translateY(-15px);
         border: 1px solid #26c4b9;
-        box-shadow: 0 0 40px rgba(38, 196, 185, 0.5);
+        box-shadow: 0 0 30px rgba(38, 196, 185, 0.4);
     }}
-
-    .icon-box {{ font-size: 90px; margin-bottom: 20px; }}
-    .text-box {{ font-size: 22px; font-weight: 800; letter-spacing: 2px; }}
     </style>
     """, unsafe_allow_html=True)
 
 # --- HEADER SECTION ---
-col_head_1, col_head_2 = st.columns([3, 1])
+col_head_l, col_head_r = st.columns([2, 1])
 
-with col_head_1:
+with col_head_l:
     st.markdown(f"""
-        <div class="partner-wrapper">
-            <img src="data:image/png;base64,{logo_ptpn}" class="img-giant-partner">
-            <img src="data:image/png;base64,{logo_sgn}" class="img-giant-partner">
-            <img src="data:image/png;base64,{logo_lpp}" class="img-giant-partner">
+        <div class="partner-box">
+            <img src="data:image/png;base64,{logo_ptpn}" class="img-partner">
+            <img src="data:image/png;base64,{logo_sgn}" class="img-partner">
+            <img src="data:image/png;base64,{logo_lpp}" class="img-partner">
         </div>
     """, unsafe_allow_html=True)
 
-with col_head_2:
+with col_head_r:
     st.selectbox("", ["SHIFT 1", "SHIFT 2", "SHIFT 3"], label_visibility="collapsed")
     st.markdown(f"""
-        <div style="text-align:right; color:white; font-family:'Poppins'; margin-top:10px;">
-            <b style="font-size:20px;">{tgl_skrg}</b><br>
-            <span style="color:#26c4b9; font-size:35px; font-weight:900;">{jam_skrg} WIB</span>
+        <div style="text-align: right; color: white; font-family: 'Poppins';">
+            <span style="font-size: 18px; opacity: 0.8;">{tgl_skrg}</span><br>
+            <span style="font-size: 32px; color: #26c4b9; font-weight: bold;">{jam_skrg} WIB</span>
         </div>
     """, unsafe_allow_html=True)
 
-# --- HERO SECTION (KOTAK RAKSASA) ---
+# --- HERO SECTION (KOTAK JUDUL) ---
 st.markdown(f"""
     <div class="hero-container">
-        <img src="data:image/png;base64,{logo_cane}" class="logo-cane-giant">
-        <h1 class="giant-title">CANE METRIX</h1>
-        <p class="giant-subtitle">Accelerating QA Performance</p>
+        <img src="data:image/png;base64,{logo_cane}" class="main-logo-glow">
+        <h1 class="title-text">CANE METRIX</h1>
+        <p class="sub-text">Accelerating QA Performance</p>
     </div>
 """, unsafe_allow_html=True)
 
-# --- SUB MENU SECTION ---
+# --- SUB-MENU GRID ---
 st.write("") # Spacer
 m1, m2, m3 = st.columns(3)
-menus = [
+items = [
     ("📝", "Input Data"), ("📅", "Database Harian"), ("📊", "Database Bulanan"),
     ("⚖️", "Rekap Stasiun"), ("🧮", "Hitung"), ("👤", "Akun"),
     ("📈", "Trend"), ("⚙️", "Pengaturan"), ("📥", "Export Data")
 ]
 
-for i, (icon, text) in enumerate(menus):
+for i, (icon, text) in enumerate(items):
     with [m1, m2, m3][i % 3]:
         st.markdown(f"""
             <div class="menu-card">
-                <div class="icon-box">{icon}</div>
-                <div class="text-box">{text.upper()}</div>
+                <div style="font-size: 80px; margin-bottom: 20px;">{icon}</div>
+                <div style="font-size: 22px; font-weight: 700; letter-spacing: 3px;">{text.upper()}</div>
             </div>
         """, unsafe_allow_html=True)
         st.write("") 
 
 # --- FOOTER ---
-st.markdown(f"""
-    <div style="background: linear-gradient(90deg, #26c4b9, #1a4a7a); padding: 20px; border-radius: 20px; text-align: center; color: white; font-weight: 900; font-size: 26px; margin-top:50px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-        TOTAL SAMPEL MASUK HARI INI: 45
+st.markdown("""
+    <div style="margin-top: 50px; padding: 20px; background: linear-gradient(90deg, #26c4b9, #1a4a7a); border-radius: 20px; text-align: center; color: white;">
+        <span style="font-size: 24px; font-weight: bold;">Sistem Quality Assurance - Pabrik Gula Terintegrasi</span>
     </div>
-    """, unsafe_allow_html=True)
+""", unsafe_allow_html=True)
