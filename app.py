@@ -1,21 +1,14 @@
 import streamlit as st
-import datetime
-import pytz
-from streamlit_autorefresh import st_autorefresh
 import numpy as np
 
-# --- 1. CONFIG & INITIAL STATE ---
+# --- 1. CONFIG ---
 st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
 
-# Inisialisasi session state (Kunci Utama Navigasi)
+# Inisialisasi session state
 if 'page' not in st.session_state:
-    st.session_state.page = 'Dashboard'
+    st.session_state.page = 'dashboard'
 
-# Fungsi Pindah Halaman (Callback agar lebih stabil)
-def pindah_ke(nama_halaman):
-    st.session_state.page = nama_halaman
-
-# --- 2. DATA KOREKSI BRIX (Sesuai Foto Tabel Lo) ---
+# --- 2. LOGIKA KOREKSI ---
 data_koreksi = {
     25: -0.19, 26: -0.12, 27: -0.05, 28: 0.02, 29: 0.09,
     30: 0.16, 31: 0.24, 32: 0.31, 33: 0.38, 34: 0.46,
@@ -29,88 +22,66 @@ def hitung_koreksi(suhu_val):
     s_vals = [data_koreksi[k] for k in s_keys]
     return float(np.interp(suhu_val, s_keys, s_vals))
 
-# --- 3. CSS UNTUK UI ---
+# --- 3. CSS SEDERHANA (Biar gak berat) ---
 st.markdown("""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Michroma&family=Poppins:wght@400;700;900&display=swap');
-    .stApp { background: #000a1e; color: white; }
-    .glass {
-        background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px);
-        padding: 25px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
+    .stButton>button {
+        height: 120px; width: 100%; border-radius: 15px;
+        font-size: 20px; font-weight: bold; margin: 10px 0px;
     }
-    .jam-text { color: #26c4b9; font-family: 'Poppins'; font-size: 30px; font-weight: 900; }
-    
-    /* Style Tombol Dashboard */
-    div.stButton > button {
-        height: 150px !important; width: 100% !important;
-        border-radius: 20px !important; font-size: 20px !important;
-        background: rgba(255,255,255,0.1) !important; color: white !important;
-        border: 1px solid rgba(255,255,255,0.2) !important; transition: 0.3s;
-    }
-    div.stButton > button:hover { 
-        border-color: #26c4b9 !important; 
-        background: rgba(38,196,185,0.2) !important;
-        transform: translateY(-5px);
+    .main-card {
+        background: rgba(255, 255, 255, 0.1); padding: 20px;
+        border-radius: 20px; border: 1px solid #444;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 4. HEADER (JAM DIGITAL) ---
-c1, c2 = st.columns([8, 2])
-with c2:
-    tz = pytz.timezone('Asia/Jakarta')
-    now = datetime.datetime.now(tz)
-    st.markdown(f'<div class="jam-text">{now.strftime("%H:%M:%S")}</div>', unsafe_allow_html=True)
+# --- 4. NAVIGASI ---
 
-# Autorefresh jam tetap jalan
-st_autorefresh(interval=1000, key="jam_refresh")
-
-# --- 5. LOGIKA NAVIGASI HALAMAN ---
-
-if st.session_state.page == "Dashboard":
-    st.markdown('<div class="glass"><h1 style="font-family:Michroma;">CANE METRIX</h1>'
-                '<p style="color:#26c4b9;">ACCELERATING QA PERFORMANCE</p></div>', unsafe_allow_html=True)
-    st.write("---")
+if st.session_state.page == 'dashboard':
+    st.title("CANE METRIX")
+    st.write("ACCELERATING QA PERFORMANCE")
     
-    m1, m2, m3 = st.columns(3)
-    with m1:
-        # Gunakan on_click agar state berubah sebelum script rerun
-        st.button("📝\nINPUT DATA", on_click=pindah_ke, args=("Input Data",), key="btn_input")
-    with m2:
-        st.button("🧮\nHITUNG ANALISA", on_click=pindah_ke, args=("Hitung Analisa",), key="btn_analisa")
-    with m3:
-        st.button("📅\nDATABASE", on_click=pindah_ke, args=("Database",), key="btn_db")
+    col1, col2, col3 = st.columns(3)
+    
+    # Teknik Tanpa Callback: Langsung Ubah State & Rerun
+    with col1:
+        if st.button("📝 INPUT DATA", key="btn1"):
+            st.session_state.page = 'input'
+            st.rerun()
+            
+    with col2:
+        if st.button("🧮 HITUNG ANALISA", key="btn2"):
+            st.session_state.page = 'analisa'
+            st.rerun()
+            
+    with col3:
+        if st.button("📅 DATABASE", key="btn3"):
+            st.session_state.page = 'database'
+            st.rerun()
 
-elif st.session_state.page == "Hitung Analisa":
-    st.markdown("## 🧪 KALKULATOR % BRIX")
+elif st.session_state.page == 'analisa':
+    st.title("🧪 ANALISA TETES (% BRIX)")
     
-    # Tombol Kembali di atas (biar gampang)
-    st.button("🔙 KEMBALI KE DASHBOARD", on_click=pindah_ke, args=("Dashboard",), key="back_top")
-    
-    st.markdown('<div class="glass">', unsafe_allow_html=True)
-    col_input, col_hasil = st.columns(2)
-    with col_input:
-        st.subheader("Data Lab")
-        b_obs = st.number_input("Brix Teramati (Lab)", value=8.50, step=0.01)
-        b_10x = b_obs * 10
-        st.info(f"Brix Pengenceran: {b_10x:.2f}")
-        suhu = st.number_input("Suhu (°C)", min_value=25.0, max_value=50.0, value=28.0)
+    if st.button("🔙 KEMBALI KE DASHBOARD"):
+        st.session_state.page = 'dashboard'
+        st.rerun()
         
-    with col_hasil:
-        st.subheader("Hasil Akhir")
-        kor = hitung_koreksi(suhu)
-        total_brix = b_10x + kor
-        
-        st.markdown(f"""
-            <div style="background:rgba(38,196,185,0.1); padding:20px; border-radius:15px; border:2px solid #26c4b9; text-align:center;">
-                <p style="margin:0;">HASIL % BRIX</p>
-                <h1 style="font-size:80px; margin:0;">{total_brix:.2f}</h1>
-                <p style="color:#26c4b9;">Koreksi Suhu: {kor:+.2f}</p>
-            </div>
-        """, unsafe_allow_html=True)
+    st.markdown('<div class="main-card">', unsafe_allow_html=True)
+    c1, c2 = st.columns(2)
+    with c1:
+        st.subheader("Input")
+        b_obs = st.number_input("Brix Teramati", value=8.50)
+        suhu = st.number_input("Suhu (°C)", value=28.0)
+    with c2:
+        st.subheader("Hasil")
+        k = hitung_koreksi(suhu)
+        hasil = (b_obs * 10) + k
+        st.success(f"Hasil % Brix: {hasil:.2f}")
     st.markdown('</div>', unsafe_allow_html=True)
 
 else:
-    st.markdown(f"### Halaman {st.session_state.page}")
-    st.write("Halaman sedang dikembangkan.")
-    st.button("🔙 KEMBALI", on_click=pindah_ke, args=("Dashboard",), key="back_other")
+    st.write(f"Halaman {st.session_state.page} sedang progress.")
+    if st.button("KEMBALI"):
+        st.session_state.page = 'dashboard'
+        st.rerun()
