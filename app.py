@@ -17,7 +17,7 @@ def pindah_halaman(nama_halaman):
     st.session_state.page = nama_halaman
     st.rerun()
 
-# Autorefresh tiap 2 detik biar jam update tapi gak ganggu klik
+# Autorefresh tiap 2 detik biar jam update
 st_autorefresh(interval=2000, key="datarefresh")
 
 # Waktu & Jam
@@ -51,11 +51,11 @@ def get_base64_logo(file_name):
             return base64.b64encode(f.read()).decode()
     return ""
 
-# LOAD SEMUA LOGO (Termasuk Logo KB)
-logo_ptpn = get_base64_logo("ptpn.png")
+# LOAD SEMUA LOGO
+logo_kb = get_base64_logo("kb.png")
 logo_sgn = get_base64_logo("sgn.png")
 logo_lpp = get_base64_logo("lpp.png")
-logo_kb = get_base64_logo("kb.png") # Logo baru
+logo_ptpn = get_base64_logo("ptpn.png")
 logo_cane = get_base64_logo("canemetrix.png")
 
 # --- 2. CSS CUSTOM ---
@@ -69,10 +69,11 @@ st.markdown(f"""
         background-size: cover;
     }}
 
-    /* KOTAK LOGO PANJANG (4 LOGO) */
+    /* KOTAK LOGO PANJANG URUTAN: KB, SGN, LPP, PTPN */
     .partner-box {{ 
-        background: white; padding: 12px 45px; border-radius: 12px; 
-        display: inline-flex; align-items: center; gap: 35px; min-width: 550px;
+        background: white; padding: 12px 40px; border-radius: 12px; 
+        display: inline-flex; align-items: center; gap: 30px; min-width: 580px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }}
 
     .jam-digital {{
@@ -88,6 +89,7 @@ st.markdown(f"""
         height: 180px !important; width: 100% !important;
         font-size: 22px !important; font-weight: 700 !important;
         display: flex !important; flex-direction: column !important;
+        transition: 0.3s;
     }}
 
     div.stButton > button:hover {{
@@ -104,8 +106,54 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. HEADER (DENGAN 4 LOGO) ---
+# --- 3. HEADER (URUTAN LOGO: KB, SGN, LPP, PTPN) ---
 h1, h2 = st.columns([3, 1])
 with h1:
     st.markdown(f'''<div class="partner-box">
-        <img src="data:image/png;base64,{
+        <img src="data:image/png;base64,{logo_kb}" height="35">
+        <img src="data:image/png;base64,{logo_sgn}" height="35">
+        <img src="data:image/png;base64,{logo_lpp}" height="35">
+        <img src="data:image/png;base64,{logo_ptpn}" height="35">
+    </div>''', unsafe_allow_html=True)
+with h2:
+    st.markdown(f'<div style="text-align:right;"><div style="color:white; opacity:0.8; font-family:Poppins;">{tgl_skrg}</div><div class="jam-digital">{jam_skrg}</div></div>', unsafe_allow_html=True)
+
+# --- 4. NAVIGATION LOGIC ---
+if st.session_state.page == 'dashboard':
+    st.markdown(f'''
+    <div class="hero-box" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <h1 style="font-family:'Michroma'; color:white; font-size:55px; margin:0; letter-spacing:10px;">CANE METRIX</h1>
+            <p style="color:#26c4b9; font-family:'Poppins'; font-weight:700; letter-spacing:5px;">ACCELERATING QA PERFORMANCE</p>
+        </div>
+        <img src="data:image/png;base64,{logo_cane}" height="180">
+    </div>
+    ''', unsafe_allow_html=True)
+
+    c1, c2, c3 = st.columns(3)
+    with c1: st.button("📝\nINPUT DATA", on_click=pindah_halaman, args=('input_data',), key="m1")
+    with c2: st.button("🧮\nHITUNG ANALISA", on_click=pindah_halaman, args=('analisa_tetes',), key="m2")
+    with c3: st.button("📅\nDATABASE HARIAN", on_click=pindah_halaman, args=('db_harian',), key="m3")
+
+elif st.session_state.page == 'analisa_tetes':
+    st.markdown("<h2 style='text-align:center; color:white; font-family:Michroma; margin-top:20px; letter-spacing:5px;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
+    
+    st.markdown('<div class="hero-box">', unsafe_allow_html=True)
+    k1, k2 = st.columns(2)
+    with k1:
+        st.markdown("<h3 style='color:#26c4b9; font-family:Poppins;'>Input Parameter</h3>", unsafe_allow_html=True)
+        bx = st.number_input("Brix Teramati", value=8.80, format="%.2f")
+        sh = st.number_input("Suhu Teramati (°C)", value=28.3, format="%.1f")
+        kor = hitung_interpolasi(sh)
+    with k2:
+        hasil = (bx * 10) + kor
+        st.markdown(f'''
+            <div style="background:rgba(38,196,185,0.2); padding:40px; border-radius:25px; border:2px solid #26c4b9; text-align:center;">
+                <h4 style="color:white; margin:0; font-family:Poppins;">HASIL % BRIX AKHIR</h4>
+                <h1 style="color:#26c4b9; font-size:75px; font-family:Michroma; margin:15px 0;">{hasil:.3f}</h1>
+                <p style="color:white; font-family:Poppins;">Faktor Koreksi Suhu: <b>{kor:+.3f}</b></p>
+            </div>
+        ''', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.button("🔙 KEMBALI KE DASHBOARD", on_click=pindah_halaman, args=('dashboard',), key="back_btn")
