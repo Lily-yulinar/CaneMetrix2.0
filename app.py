@@ -5,7 +5,7 @@ from streamlit_autorefresh import st_autorefresh
 import base64
 import os
 
-# --- 1. SETTING PAGE & STATE ---
+# --- 1. CONFIG & STATE ---
 st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
 
 if 'page' not in st.session_state:
@@ -15,10 +15,10 @@ def pindah_halaman(nama_halaman):
     st.session_state.page = nama_halaman
     st.rerun()
 
-# Refresh 2 detik biar jam update
+# Refresh 2 detik
 st_autorefresh(interval=2000, key="datarefresh")
 
-# Waktu
+# Waktu & Jam
 tz = pytz.timezone('Asia/Jakarta')
 now = datetime.datetime.now(tz)
 tgl_skrg = now.strftime("%d %B %Y")
@@ -44,17 +44,20 @@ def hitung_interpolasi(suhu_user):
     return 0.0
 
 def get_base64_logo(file_name):
-    if os.path.exists(file_name):
-        with open(file_name, "rb") as f:
-            return base64.b64encode(f.read()).decode()
-    return None # Balikin None kalau file ga ada
+    try:
+        if os.path.exists(file_name):
+            with open(file_name, "rb") as f:
+                return base64.b64encode(f.read()).decode()
+    except:
+        return ""
+    return ""
 
-# LOAD SEMUA LOGO (Pastiin nama file beneran 'kb.png', 'sgn.png', dll)
-logo_kb = get_base64_logo("kb.png")
-logo_sgn = get_base64_logo("sgn.png")
-logo_lpp = get_base64_logo("lpp.png")
-logo_ptpn = get_base64_logo("ptpn.png")
-logo_cane = get_base64_logo("canemetrix.png")
+# LOAD SEMUA LOGO (URUTAN: KB, SGN, LPP, PTPN)
+l_kb = get_base64_logo("kb.png")
+l_sgn = get_base64_logo("sgn.png")
+l_lpp = get_base64_logo("lpp.png")
+l_ptpn = get_base64_logo("ptpn.png")
+l_cane = get_base64_logo("canemetrix.png")
 
 # --- 2. CSS CUSTOM ---
 st.markdown(f"""
@@ -67,19 +70,19 @@ st.markdown(f"""
         background-size: cover;
     }}
 
-    /* KOTAK LOGO LEBIH PANJANG UNTUK 4 LOGO */
-    .partner-box {{ 
-        background: white; padding: 15px 40px; border-radius: 15px; 
-        display: inline-flex; align-items: center; gap: 30px; 
-        min-width: 600px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    /* KOTAK LOGO - Paksa Putih & Panjang */
+    .partner-container {{ 
+        background: white; padding: 15px 35px; border-radius: 15px; 
+        display: flex; align-items: center; justify-content: center; gap: 30px; 
+        width: fit-content; min-width: 550px;
     }}
+    .partner-container img {{ height: 35px; width: auto; object-fit: contain; }}
 
     .jam-digital {{
         color: #26c4b9; font-size: 55px; font-weight: 900; 
         font-family: 'Poppins'; line-height: 1; text-shadow: 0 0 20px rgba(38, 196, 185, 0.8);
     }}
 
-    /* TOMBOL MENU CARD */
     div.stButton > button {{
         background: rgba(255, 255, 255, 0.07) !important;
         color: white !important;
@@ -87,7 +90,6 @@ st.markdown(f"""
         border-radius: 20px !important;
         height: 180px !important; width: 100% !important;
         font-size: 20px !important; font-weight: 700 !important;
-        display: flex !important; flex-direction: column !important;
     }}
 
     div.stButton > button:hover {{
@@ -104,25 +106,28 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. HEADER (URUTAN: KB, SGN, LPP, PTPN) ---
+# --- 3. HEADER (FIX URUTAN LOGO) ---
 h1, h2 = st.columns([3, 1])
 with h1:
-    # Buat string HTML untuk logo yang ada saja
-    html_logos = ""
-    for l_data in [logo_kb, logo_sgn, logo_lpp, logo_ptpn]:
-        if l_data:
-            html_logos += f'<img src="data:image/png;base64,{l_data}" height="35">'
+    # Kita rakit HTML logonya secara manual di sini
+    logo_html = '<div class="partner-container">'
+    if l_kb: logo_html += f'<img src="data:image/png;base64,{l_kb}">'
+    if l_sgn: logo_html += f'<img src="data:image/png;base64,{l_sgn}">'
+    if l_lpp: logo_html += f'<img src="data:image/png;base64,{l_lpp}">'
+    if l_ptpn: logo_html += f'<img src="data:image/png;base64,{l_ptpn}">'
+    logo_html += '</div>'
     
-    st.markdown(f'''<div class="partner-box">{html_logos}</div>''', unsafe_allow_html=True)
-    
-    # Alert kalau KB belum ada (Bisa dihapus kalau udah ok)
-    if not logo_kb:
-        st.warning("⚠️ File 'kb.png' belum terdeteksi di folder!")
+    st.markdown(logo_html, unsafe_allow_html=True)
 
 with h2:
-    st.markdown(f'<div style="text-align:right;"><div style="color:white; opacity:0.8; font-family:Poppins;">{tgl_skrg}</div><div class="jam-digital">{jam_skrg}</div></div>', unsafe_allow_html=True)
+    st.markdown(f'''
+    <div style="text-align:right;">
+        <div style="color:white; opacity:0.8; font-family:Poppins;">{tgl_skrg}</div>
+        <div class="jam-digital">{jam_skrg}</div>
+    </div>
+    ''', unsafe_allow_html=True)
 
-# --- 4. NAVIGATION ---
+# --- 4. NAVIGATION LOGIC ---
 if st.session_state.page == 'dashboard':
     st.markdown(f'''
     <div class="hero-box" style="display:flex; justify-content:space-between; align-items:center;">
@@ -130,7 +135,7 @@ if st.session_state.page == 'dashboard':
             <h1 style="font-family:'Michroma'; color:white; font-size:55px; margin:0; letter-spacing:10px;">CANE METRIX</h1>
             <p style="color:#26c4b9; font-family:'Poppins'; font-weight:700; letter-spacing:5px;">ACCELERATING QA PERFORMANCE</p>
         </div>
-        <img src="data:image/png;base64,{logo_cane}" height="180">
+        <img src="data:image/png;base64,{l_cane}" height="180">
     </div>
     ''', unsafe_allow_html=True)
 
@@ -138,6 +143,12 @@ if st.session_state.page == 'dashboard':
     with c1: st.button("📝\nINPUT DATA", on_click=pindah_halaman, args=('input_data',), key="m1")
     with c2: st.button("🧮\nHITUNG ANALISA", on_click=pindah_halaman, args=('analisa_tetes',), key="m2")
     with c3: st.button("📅\nDATABASE HARIAN", on_click=pindah_halaman, args=('db_harian',), key="m3")
+
+    st.write("") # Spasi
+    c4, c5, c6 = st.columns(3)
+    with c4: st.button("📊\nDATABASE BULANAN", key="m4")
+    with c5: st.button("⚖️\nREKAP STASIUN", key="m5")
+    with c6: st.button("📈\nTREND", key="m6")
 
 elif st.session_state.page == 'analisa_tetes':
     st.markdown("<h2 style='text-align:center; color:white; font-family:Michroma; margin-top:20px;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
@@ -152,7 +163,7 @@ elif st.session_state.page == 'analisa_tetes':
         st.markdown(f'''
             <div style="background:rgba(38,196,185,0.2); padding:40px; border-radius:25px; border:2px solid #26c4b9; text-align:center;">
                 <h1 style="color:#26c4b9; font-size:75px; font-family:Michroma; margin:0;">{hasil:.3f}</h1>
-                <p style="color:white;">Koreksi: {kor:+.3f}</p>
+                <p style="color:white; font-family:Poppins;">Koreksi Suhu: {kor:+.3f}</p>
             </div>
         ''', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
