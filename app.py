@@ -5,21 +5,18 @@ from streamlit_autorefresh import st_autorefresh
 import base64
 import os
 
-# --- 1. INITIAL STATE & SETUP ---
-# Pastikan session state didefinisikan paling atas sebelum apapun
-if 'page' not in st.session_state: 
+# --- 1. INITIAL STATE (WAJIB PALING ATAS) ---
+if 'page' not in st.session_state:
     st.session_state.page = 'dashboard'
+
+def navigasi(nama_halaman):
+    st.session_state.page = nama_halaman
+    st.rerun()
 
 st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
 st_autorefresh(interval=1000, key="datarefresh")
 
-# Waktu & Jam
-tz = pytz.timezone('Asia/Jakarta')
-now = datetime.datetime.now(tz)
-tgl_skrg = now.strftime("%d %B %Y")
-jam_skrg = now.strftime("%H:%M:%S")
-
-# Data Tabel Koreksi (Gambar 4 - Interpolasi)
+# --- 2. DATA & PERHITUNGAN ---
 data_koreksi = {
     25: -0.19, 26: -0.12, 27: -0.05, 28: 0.02, 29: 0.09, 30: 0.16,
     31: 0.24, 32: 0.31, 33: 0.38, 34: 0.46, 35: 0.54, 36: 0.62,
@@ -40,98 +37,60 @@ def hitung_interpolasi(suhu_user):
             return y0 + (suhu_user - x0) * (y1 - y0) / (x1 - x0)
     return 0.0
 
-def get_base64_logo(file_name):
-    if os.path.exists(file_name):
-        with open(file_name, "rb") as f:
-            return base64.b64encode(f.read()).decode()
-    return ""
-
-logo_ptpn = get_base64_logo("ptpn.png")
-logo_sgn = get_base64_logo("sgn.png")
-logo_lpp = get_base64_logo("lpp.png")
-logo_cane = get_base64_logo("canemetrix.png")
-
-# --- 2. CSS FIX (TAMPILAN ACC LO) ---
-st.markdown(f"""
+# --- 3. CSS (DESAIN ACC LO) ---
+st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Poppins:wght@300;400;700&display=swap');
     
-    .stApp {{
-        background: linear-gradient(rgba(0, 10, 30, 0.75), rgba(0, 10, 30, 0.75)), 
+    .stApp {
+        background: linear-gradient(rgba(0, 10, 30, 0.8), rgba(0, 10, 30, 0.8)), 
         url("https://images.pexels.com/photos/2280571/pexels-photo-2280571.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2");
         background-size: cover; background-position: center; background-attachment: fixed;
-    }}
+    }
 
-    .partner-box {{ background: white; padding: 8px 20px; border-radius: 12px; display: inline-flex; align-items: center; gap: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }}
-    .img-partner {{ height: 35px; width: auto; }}
-
-    .hero-container {{
+    .hero-container {
         background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px);
         border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 30px;
-        padding: 25px; margin: 10px auto 30px auto; text-align: center; max-width: 90%;
-    }}
+        padding: 30px; margin-bottom: 30px; text-align: center;
+    }
 
-    .title-text {{
-        font-family: 'Orbitron'; color: white; font-size: 65px; letter-spacing: 12px; margin: 0; font-weight: 900;
-        text-shadow: 0 0 10px #fff, 0 0 20px #26c4b9, 0 0 40px #26c4b9;
-    }}
-
-    .menu-card-container {{
-        position: relative;
+    .menu-card-visual {
         background: rgba(255, 255, 255, 0.07);
-        backdrop-filter: blur(10px);
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        height: 200px;
-        transition: 0.3s;
-        margin-bottom: 25px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-    }}
+        border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1);
+        height: 200px; display: flex; flex-direction: column;
+        justify-content: center; align-items: center; text-align: center;
+    }
 
-    .menu-card-container:hover {{
+    /* Bikin Button Streamlit jadi invisible tapi nutupin card */
+    .stButton > button {
+        position: relative;
+        margin-top: -200px; /* Tarik tombol ke atas card visual */
+        height: 200px !important;
+        width: 100% !important;
+        background: transparent !important;
+        color: transparent !important;
+        border: none !important;
+        z-index: 10;
+        cursor: pointer;
+    }
+
+    .menu-card-visual:hover {
         background: rgba(38, 196, 185, 0.15);
         border: 1px solid #26c4b9;
         box-shadow: 0 0 25px rgba(38, 196, 185, 0.4);
-        transform: translateY(-5px);
-    }}
-
-    /* CSS Button Invisible agar Card bisa diklik */
-    .stButton > button {{
-        position: absolute; width: 100%; height: 100%;
-        background: transparent !important; border: none !important;
-        color: transparent !important; z-index: 10;
-    }}
-
-    .menu-content {{ text-align: center; color: white; pointer-events: none; }}
-    .menu-icon {{ font-size: 50px; margin-bottom: 10px; display: block; }}
-    .menu-label {{ font-family: 'Poppins'; font-weight: 700; font-size: 15px; letter-spacing: 1px; text-transform: uppercase; }}
+    }
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. LOGIKA HALAMAN (UTAMA) ---
-
+# --- 4. TAMPILAN DASHBOARD ---
 if st.session_state.page == 'dashboard':
-    # --- HEADER DASHBOARD ---
-    c1, c2 = st.columns([2, 1])
-    with c1:
-        st.markdown(f'<div class="partner-box"><img src="data:image/png;base64,{logo_ptpn}" class="img-partner"><img src="data:image/png;base64,{logo_sgn}" class="img-partner"><img src="data:image/png;base64,{logo_lpp}" class="img-partner"></div>', unsafe_allow_html=True)
-    with c2:
-        st.selectbox("", ["SHIFT 1", "SHIFT 2", "SHIFT 3"], label_visibility="collapsed")
-        st.markdown(f'<div style="text-align: right; color: white; font-family: \'Poppins\';"><span style="font-size: 14px; opacity: 0.7;">{tgl_skrg}</span><br><span style="font-size: 24px; color: #26c4b9; font-weight: bold;">{jam_skrg} WIB</span></div>', unsafe_allow_html=True)
+    tz = pytz.timezone('Asia/Jakarta')
+    now = datetime.datetime.now(tz)
+    
+    st.markdown(f'<div style="text-align: right; color: white;">{now.strftime("%d %B %Y")} | <span style="color:#26c4b9;">{now.strftime("%H:%M:%S")} WIB</span></div>', unsafe_allow_html=True)
 
-    # --- HERO DASHBOARD ---
-    st.markdown(f'''
-        <div class="hero-container">
-            <img src="data:image/png;base64,{logo_cane}" style="height:110px; margin-bottom:10px; filter: drop-shadow(0 0 10px #26c4b9);">
-            <h1 class="title-text">CANE METRIX</h1>
-            <p style="color:#26c4b9; font-family:\'Poppins\'; font-weight:700; letter-spacing:5px; margin-top:5px;">ACCELERATING QA PERFORMANCE</p>
-        </div>
-    ''', unsafe_allow_html=True)
+    st.markdown('<div class="hero-container"><h1 style="font-family:Orbitron; color:white; font-size:50px; letter-spacing:10px;">CANE METRIX</h1><p style="color:#26c4b9; font-family:Poppins; letter-spacing:3px;">ACCELERATING QA PERFORMANCE</p></div>', unsafe_allow_html=True)
 
-    # --- GRID MENU DASHBOARD ---
     items = [
         ("📝", "Input Data"), ("🧮", "Hitung"), ("📅", "Database Harian"),
         ("📊", "Database Bulanan"), ("⚖️", "Rekap Stasiun"), ("📈", "Trend"),
@@ -144,53 +103,43 @@ if st.session_state.page == 'dashboard':
             if i + j < len(items):
                 icon, label = items[i+j]
                 with cols[j]:
+                    # Layer 1: Visual Desain lo
                     st.markdown(f"""
-                        <div class="menu-card-container">
-                            <div class="menu-content">
-                                <span class="menu-icon">{icon}</span>
-                                <span class="menu-label">{label}</span>
-                            </div>
+                        <div class="menu-card-visual">
+                            <div style="font-size:50px;">{icon}</div>
+                            <div style="font-family:Poppins; font-weight:700; color:white;">{label.upper()}</div>
                         </div>
                     """, unsafe_allow_html=True)
-                    # Tombol pemicu rute
-                    if st.button("", key=f"btn_{label}"):
+                    # Layer 2: Button Streamlit (Navigasi)
+                    if st.button("", key=f"nav_{label}"):
                         if label == "Hitung":
-                            st.session_state.page = 'analisa_tetes'
-                            st.rerun()
+                            navigasi('analisa_tetes')
 
+# --- 5. TAMPILAN ANALISA TETES ---
 elif st.session_state.page == 'analisa_tetes':
-    # --- HALAMAN ANALISA TETES ---
-    st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron; margin-bottom:20px;'>🧪 PERHITUNGAN ANALISA TETES</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
     
     st.markdown('<div class="hero-container">', unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown("<h3 style='color:white; font-family:Poppins;'>📥 INPUT</h3>", unsafe_allow_html=True)
-        # Sesuai logika lo: Brix Teramati & Suhu Teramati
-        bx_obs = st.number_input("Brix Teramati", value=8.80, step=0.01, format="%.2f")
-        suhu_obs = st.number_input("Suhu Teramati (°C)", value=28.3, step=0.1, format="%.1f")
-        
-        # Interpolasi Otomatis
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("### 📥 INPUT")
+        bx_obs = st.number_input("Brix Teramati", value=8.80, format="%.2f")
+        suhu_obs = st.number_input("Suhu Teramati (°C)", value=28.3, format="%.1f")
         koreksi = hitung_interpolasi(suhu_obs)
-        st.markdown(f"<div style='background:rgba(38,196,185,0.2); padding:10px; border-radius:10px; color:#26c4b9; font-weight:bold; margin-top:10px;'>Koreksi Tabel: {koreksi:+.3f}</div>", unsafe_allow_html=True)
+        st.info(f"Koreksi: {koreksi:+.3f}")
     
-    with col2:
-        st.markdown("<h3 style='color:white; font-family:Poppins;'>📤 OUTPUT</h3>", unsafe_allow_html=True)
-        # RUMUS: (Brix Teramati x 10) + Hasil Interpolasi
+    with c2:
+        st.markdown("### 📤 HASIL")
         bx_x10 = bx_obs * 10
         bx_akhir = bx_x10 + koreksi
-        
         st.markdown(f"""
             <div style="background: rgba(38, 196, 185, 0.2); padding: 25px; border-radius: 20px; border: 2px solid #26c4b9; text-align: center;">
-                <p style="margin:0; font-family:Poppins; color:white; opacity:0.8;">Brix Pengenceran (x10): <b>{bx_x10:.2f}</b></p>
-                <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
-                <h4 style="margin:0; font-family:Poppins; color:white; letter-spacing:2px;">% BRIX AKHIR</h4>
-                <h1 style="margin:10px 0 0 0; color:#26c4b9; font-family:Orbitron; font-size:55px; text-shadow: 0 0 15px #26c4b9;">{bx_akhir:.3f}</h1>
+                <p style="color:white; margin:0;">Brix x 10 = {bx_x10:.2f}</p>
+                <h4 style="color:white; margin:10px 0;">% BRIX AKHIR</h4>
+                <h1 style="color:#26c4b9; font-family:Orbitron; font-size:55px;">{bx_akhir:.3f}</h1>
             </div>
         """, unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Tombol balik ke Dashboard
-    if st.button("🔙 KEMBALI KE BERANDA", key="btn_back"):
-        st.session_state.page = 'dashboard'
-        st.rerun()
+    if st.button("🔙 KEMBALI"):
+        navigasi('dashboard')
