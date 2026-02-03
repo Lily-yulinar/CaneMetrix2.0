@@ -197,4 +197,13 @@ elif st.session_state.page == 'analisa_tetes':
         hasil = (bx * 10) + kor
         st.markdown(f'''<div style="background:rgba(38,196,185,0.2); padding:30px; border-radius:20px; border:2px solid #26c4b9; text-align:center;">
             <h3 style="color:white; margin:0;">% BRIX AKHIR</h3>
-            <h1 style="color:#26c4b9; font-family:Michroma; font-size:60px; margin:10px 0;">{hasil:.3
+            <h1 style="color:#26c4b9; font-family:Michroma; font-size:60px; margin:10px 0;">{hasil:.3f}</h1>
+        </div>''', unsafe_allow_html=True)
+    
+    st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.markdown('<div class="back-btn-style">', unsafe_allow_html=True)
+    if st.button("🔙 KEMBALI KE DASHBOARD"):
+        st.session_state.page = 'dashboard'
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
