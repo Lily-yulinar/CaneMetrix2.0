@@ -5,12 +5,20 @@ from streamlit_autorefresh import st_autorefresh
 import base64
 import os
 
-# --- 1. INITIAL STATE & CONFIG ---
+# --- 1. SETTING PAGE & STATE ---
 st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
-st_autorefresh(interval=1000, key="datarefresh")
 
+# Inisialisasi State Halaman
 if 'page' not in st.session_state:
     st.session_state.page = 'dashboard'
+
+# Fungsi Navigasi Solid
+def pindah_halaman(nama_halaman):
+    st.session_state.page = nama_halaman
+    st.rerun()
+
+# Autorefresh tiap 2 detik biar jam update tapi gak ganggu klik
+st_autorefresh(interval=2000, key="datarefresh")
 
 # Waktu & Jam
 tz = pytz.timezone('Asia/Jakarta')
@@ -43,12 +51,14 @@ def get_base64_logo(file_name):
             return base64.b64encode(f.read()).decode()
     return ""
 
+# LOAD SEMUA LOGO (Termasuk Logo KB)
 logo_ptpn = get_base64_logo("ptpn.png")
 logo_sgn = get_base64_logo("sgn.png")
 logo_lpp = get_base64_logo("lpp.png")
+logo_kb = get_base64_logo("kb.png") # Logo baru
 logo_cane = get_base64_logo("canemetrix.png")
 
-# --- 2. CSS (FIX KLIK & JAM GEDE) ---
+# --- 2. CSS CUSTOM ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Michroma&family=Poppins:wght@400;700;900&display=swap');
@@ -59,94 +69,43 @@ st.markdown(f"""
         background-size: cover;
     }}
 
-    /* HEADER LOGO BOX */
+    /* KOTAK LOGO PANJANG (4 LOGO) */
     .partner-box {{ 
-        background: white; padding: 12px 60px; border-radius: 12px; 
-        display: inline-flex; align-items: center; gap: 50px;
-        min-width: 450px;
+        background: white; padding: 12px 45px; border-radius: 12px; 
+        display: inline-flex; align-items: center; gap: 35px; min-width: 550px;
     }}
 
-    /* JAM SUPER GEDE */
-    .jam-container {{ text-align: right; color: white; font-family: 'Poppins'; }}
     .jam-digital {{
         color: #26c4b9; font-size: 55px; font-weight: 900; 
-        line-height: 1; text-shadow: 0 0 20px rgba(38, 196, 185, 0.8);
+        font-family: 'Poppins'; line-height: 1; text-shadow: 0 0 20px rgba(38, 196, 185, 0.8);
     }}
 
-    /* DASHBOARD HERO */
-    .hero-container {{
-        background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 40px;
-        padding: 50px; margin: 20px 0; display: flex; justify-content: space-between; align-items: center;
-    }}
-
-    /* STYLE TOMBOL BIAR JADI CARD (BIAR BISA DIKLIK!) */
     div.stButton > button {{
         background: rgba(255, 255, 255, 0.07) !important;
         color: white !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 20px !important;
-        height: 180px !important;
-        width: 100% !important;
-        font-size: 20px !important;
-        font-weight: 700 !important;
-        transition: 0.3s !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
+        height: 180px !important; width: 100% !important;
+        font-size: 22px !important; font-weight: 700 !important;
+        display: flex !important; flex-direction: column !important;
     }}
 
     div.stButton > button:hover {{
         border: 1px solid #26c4b9 !important;
-        background: rgba(38, 196, 185, 0.15) !important;
-        box-shadow: 0 0 25px rgba(38, 196, 185, 0.4) !important;
+        background: rgba(38, 196, 185, 0.2) !important;
         transform: translateY(-5px) !important;
     }}
 
-    /* Tombol Khusus Kembali */
-    .back-btn button {{
-        height: auto !important; width: auto !important;
-        background: #26c4b9 !important; padding: 10px 30px !important;
+    .hero-box {{
+        background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 40px;
+        padding: 50px; margin-bottom: 20px;
     }}
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. HEADER ---
-c_h1, c_h2 = st.columns([3, 1])
-with c_h1:
+# --- 3. HEADER (DENGAN 4 LOGO) ---
+h1, h2 = st.columns([3, 1])
+with h1:
     st.markdown(f'''<div class="partner-box">
-        <img src="data:image/png;base64,{logo_ptpn}" height="35">
-        <img src="data:image/png;base64,{logo_sgn}" height="35">
-        <img src="data:image/png;base64,{logo_lpp}" height="35">
-    </div>''', unsafe_allow_html=True)
-with c_h2:
-    st.markdown(f'''<div class="jam-container">
-        <div style="font-size: 20px; opacity: 0.8;">{tgl_skrg}</div>
-        <div class="jam-digital">{jam_skrg}</div>
-    </div>''', unsafe_allow_html=True)
-
-# --- 4. MAIN NAVIGATION ---
-if st.session_state.page == 'dashboard':
-    st.markdown(f'''
-    <div class="hero-container">
-        <div>
-            <h1 style="font-family:'Michroma'; color:white; font-size:55px; margin:0; letter-spacing:10px;">CANE METRIX</h1>
-            <p style="color:#26c4b9; font-family:'Poppins'; font-weight:700; letter-spacing:5px;">ACCELERATING QA PERFORMANCE</p>
-        </div>
-        <img src="data:image/png;base64,{logo_cane}" height="180">
-    </div>
-    ''', unsafe_allow_html=True)
-
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.button("📝\n\nINPUT DATA", key="btn_input")
-    with col2:
-        # TOMBOL INI SEKARANG PASTI BISA DIKLIK
-        if st.button("🧮\n\nHITUNG ANALISA", key="btn_hitung"):
-            st.session_state.page = 'analisa_tetes'
-            st.rerun()
-    with col3:
-        st.button("📅\n\nDATABASE HARIAN", key="btn_harian")
-
-    col4, col5, col6 = st.
+        <img src="data:image/png;base64,{
