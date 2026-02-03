@@ -28,9 +28,10 @@ l_ptpn = get_base64_logo("ptpn.png")
 l_lpp = get_base64_logo("lpp.png")
 l_cane = get_base64_logo("canemetrix.png")
 
+# Link Backup BUMN (Wajib ada)
 url_bumn_backup = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Logo_BUMN.svg/512px-Logo_BUMN.svg.png"
 
-# --- 3. JURUS PAMUNGKAS CSS (Bongkar Container) ---
+# --- 3. CSS CUSTOM: FIX PARTNER BOX PANJANG ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Michroma&family=Poppins:wght@400;700;900&display=swap');
@@ -41,35 +42,36 @@ st.markdown(f"""
         background-size: cover;
     }}
 
-    /* MEMAKSA CONTAINER STREAMLIT UNTUK LEBAR */
-    [data-testid="stHorizontalBlock"] {{
-        align-items: center !important;
+    /* CSS SAKTI: Memaksa Container Streamlit supaya tidak membatasi lebar logo */
+    [data-testid="column"] {{
+        width: fit-content !important;
+        flex: unset !important;
+        min-width: unset !important;
     }}
 
-    /* PARTNER BOX: UKURAN MUTLAK */
-    .partner-box-fixed {{ 
+    /* PARTNER BOX: DIBIKIN PANJANG BANGET */
+    .partner-box-ultra {{ 
         background: white; 
-        padding: 15px 30px; 
-        border-radius: 15px; 
+        padding: 12px 35px; 
+        border-radius: 12px; 
         display: flex !important; 
-        flex-direction: row !important;
         align-items: center !important; 
-        gap: 25px !important; 
-        width: 550px !important; /* LEBAR FIX 550 PIXEL */
-        min-width: 550px !important;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-        margin-left: 0 !important;
+        gap: 30px !important; 
+        min-width: 500px !important; /* KITA PAKSA MINIMAL 500PX */
+        width: max-content !important;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        border: 1px solid rgba(255,255,255,0.2);
     }}
     
-    .partner-box-fixed img {{ 
-        height: 38px !important; 
+    .partner-box-ultra img {{ 
+        height: 32px !important; 
         width: auto !important;
         object-fit: contain !important;
-        flex-shrink: 0 !important;
+        flex-shrink: 0 !important; /* Logo dilarang menciut */
     }}
 
     .jam-digital {{
-        color: #26c4b9; font-size: 45px; font-weight: 900; 
+        color: #26c4b9; font-size: 40px; font-weight: 900; 
         font-family: 'Poppins'; line-height: 1.1; 
         text-shadow: 0 0 15px rgba(38, 196, 185, 0.6);
         text-align: right;
@@ -92,36 +94,38 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 4. HEADER ---
+# --- 4. HEADER COMPONENT ---
 @st.fragment
 def render_header():
-    # Gunakan satu baris container tanpa kolom ribet
-    src_kb = f"data:image/png;base64,{l_kb}" if l_kb else url_bumn_backup
-    
-    tz = pytz.timezone('Asia/Jakarta')
-    now = datetime.datetime.now(tz)
-    
-    # KITA PAKAI FLEXBOX MANUAL DI SINI
-    header_html = f'''
-    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-        <div class="partner-box-fixed">
-            <img src="{src_kb}">
-            <img src="data:image/png;base64,{l_sgn if l_sgn else ''}">
-            <img src="data:image/png;base64,{l_ptpn if l_ptpn else ''}">
-            <img src="data:image/png;base64,{l_lpp if l_lpp else ''}">
+    # Gunakan ratio [5, 2] agar area logo dapet jatah 70% lebar layar
+    h1, h2 = st.columns([5, 2])
+    with h1:
+        src_kb = f"data:image/png;base64,{l_kb}" if l_kb else url_bumn_backup
+        
+        html_logos = f'''
+        <div class="partner-box-ultra">
+            <img src="{src_kb}" alt="BUMN">
+            <img src="data:image/png;base64,{l_sgn if l_sgn else ''}" alt="SGN">
+            <img src="data:image/png;base64,{l_ptpn if l_ptpn else ''}" alt="PTPN">
+            <img src="data:image/png;base64,{l_lpp if l_lpp else ''}" alt="LPP">
         </div>
-        <div>
-            <div style="color:white; opacity:0.8; font-family:Poppins; text-align:right;">{now.strftime("%d %B %Y")}</div>
-            <div class="jam-digital">{now.strftime("%H:%M:%S")} <span style="font-size:18px;">WIB</span></div>
-        </div>
-    </div>
-    '''
-    st.markdown(header_html, unsafe_allow_html=True)
+        '''
+        st.markdown(html_logos, unsafe_allow_html=True)
+
+    with h2:
+        tz = pytz.timezone('Asia/Jakarta')
+        now = datetime.datetime.now(tz)
+        st.markdown(f'''
+            <div style="text-align:right; margin-top: 10px;">
+                <div style="color:white; opacity:0.8; font-family:Poppins; font-size: 14px;">{now.strftime("%d %B %Y")}</div>
+                <div class="jam-digital">{now.strftime("%H:%M:%S")} <span style="font-size:15px;">WIB</span></div>
+            </div>
+        ''', unsafe_allow_html=True)
     st_autorefresh(interval=1000, key="global_clock")
 
 render_header()
 
-# --- 5. NAVIGATION LOGIC ---
+# --- 5. DASHBOARD ---
 if st.session_state.page == 'dashboard':
     st.markdown(f'''
     <div class="glass-card" style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:30px;">
