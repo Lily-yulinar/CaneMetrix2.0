@@ -4,6 +4,7 @@ import pytz
 from streamlit_autorefresh import st_autorefresh
 import base64
 import os
+import numpy as np  # Ini untuk interpolasi suhu
 
 # --- 1. SETTING PAGE ---
 st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
@@ -15,7 +16,22 @@ def pindah_halaman(nama_halaman):
     st.session_state.page = nama_halaman
     st.rerun()
 
-# --- 2. FUNGSI LOAD LOGO ---
+# --- 2. DATA TABEL KOREKSI SUHU BRIX ---
+# Diambil dari gambar tabel yang lo upload
+data_koreksi = {
+    25: -0.19, 26: -0.12, 27: -0.05, 28: 0.02, 29: 0.09,
+    30: 0.16, 31: 0.24, 32: 0.31, 33: 0.38, 34: 0.46,
+    35: 0.54, 36: 0.62, 37: 0.70, 38: 0.78, 39: 0.86,
+    40: 0.94, 41: 1.02, 42: 1.10, 43: 1.18, 44: 1.26,
+    45: 1.34, 46: 1.42, 47: 1.50, 48: 1.58, 49: 1.66, 50: 1.72
+}
+
+def hitung_koreksi_suhu(suhu_input):
+    suhu_list = sorted(data_koreksi.keys())
+    koreksi_list = [data_koreksi[s] for s in suhu_list]
+    return np.interp(suhu_input, suhu_list, koreksi_list)
+
+# --- 3. FUNGSI LOAD LOGO ---
 def get_base64_logo(file_name):
     if os.path.exists(file_name):
         with open(file_name, "rb") as f:
@@ -30,7 +46,7 @@ l_cane = get_base64_logo("canemetrix.png")
 
 url_bumn_backup = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Logo_BUMN.svg/512px-Logo_BUMN.svg.png"
 
-# --- 3. CSS SAKTI (OVERRIDE TOTAL) ---
+# --- 4. CSS CUSTOM ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Michroma&family=Poppins:wght@400;700;900&display=swap');
@@ -41,14 +57,12 @@ st.markdown(f"""
         background-size: cover;
     }}
 
-    /* MEMBONGKAR PEMBATAS BAWAAN STREAMLIT */
     [data-testid="column"] {{
         width: auto !important;
         min-width: unset !important;
         flex: unset !important;
     }}
 
-    /* PARTNER BOX: KITA PAKSA LEBAR 650PX (SANGAT PANJANG) */
     .fixed-partner-box {{ 
         background: white; 
         padding: 10px 40px !important;
@@ -56,23 +70,17 @@ st.markdown(f"""
         display: flex !important; 
         flex-direction: row !important;
         align-items: center !important; 
-        justify-content: flex-start !important;
         gap: 35px !important; 
-        
-        /* INI KUNCINYA */
         width: 650px !important; 
         min-width: 650px !important;
-        max-width: 650px !important;
-        
         box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-        margin-left: -50px; /* Geser sedikit ke kiri biar dapet space lebih */
+        margin-left: -50px;
     }}
     
     .fixed-partner-box img {{ 
         height: 35px !important; 
         width: auto !important;
         flex-shrink: 0 !important;
-        object-fit: contain !important;
     }}
 
     .jam-digital {{
@@ -84,9 +92,10 @@ st.markdown(f"""
     .glass-card {{
         background: rgba(255, 255, 255, 0.05); 
         backdrop-filter: blur(15px); 
-        padding: 40px; 
-        border-radius: 30px; 
+        padding: 30px; 
+        border-radius: 25px; 
         border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 20px;
     }}
 
     div.stButton > button {{
@@ -98,14 +107,12 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 4. HEADER ---
+# --- 5. HEADER COMPONENT ---
 @st.fragment
 def render_header():
-    # Gunakan ratio kolom 10 banding 1 supaya kolom kiri dapet space gila-gilaan
     h1, h2 = st.columns([10, 3])
     with h1:
         src_kb = f"data:image/png;base64,{l_kb}" if l_kb else url_bumn_backup
-        
         html_logos = f'''
         <div class="fixed-partner-box">
             <img src="{src_kb}">
@@ -129,10 +136,10 @@ def render_header():
 
 render_header()
 
-# --- 5. DASHBOARD ---
+# --- 6. NAVIGATION LOGIC ---
 if st.session_state.page == 'dashboard':
     st.markdown(f'''
-    <div class="glass-card" style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:30px;">
+    <div class="glass-card" style="display:flex; justify-content:space-between; align-items:center; margin-top:20px;">
         <div>
             <h1 style="font-family:'Michroma'; color:white; font-size:clamp(30px, 5vw, 55px); margin:0; letter-spacing:8px;">CANE METRIX</h1>
             <p style="color:#26c4b9; font-family:'Poppins'; font-weight:700; letter-spacing:5px;">ACCELERATING QA PERFORMANCE</p>
@@ -149,13 +156,46 @@ if st.session_state.page == 'dashboard':
     with c3: 
         if st.button("📅\nDATABASE HARIAN"): pindah_halaman('db_harian')
 
-# Logika Halaman Lainnya (Tetap Sama)
 elif st.session_state.page == 'input_data':
     st.markdown("<h2 style='color:white; font-family:Michroma;'>📝 INPUT DATA</h2>", unsafe_allow_html=True)
     if st.button("🔙 KEMBALI"): pindah_halaman('dashboard')
+
 elif st.session_state.page == 'analisa_tetes':
     st.markdown("<h2 style='color:white; font-family:Michroma;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
+    
+    st.markdown('<div class="glass-card">', unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("<h4 style='color:white;'>Input Data Lab</h4>", unsafe_allow_html=True)
+        brix_obs = st.number_input("Brix Teramati", min_value=0.0, value=8.50, step=0.01, format="%.2f")
+        
+        # Hitung Otomatis Pengenceran
+        brix_pengenceran = brix_obs * 10
+        st.write(f"Brix Pengenceran: **{brix_pengenceran:.2f}**")
+        
+        suhu = st.number_input("Suhu (°C)", min_value=25.0, max_value=50.0, value=28.0, step=0.1)
+
+    with col2:
+        st.markdown("<h4 style='color:white;'>Hasil Analisa</h4>", unsafe_allow_html=True)
+        
+        # Logika Interpolasi
+        koreksi = hitung_koreksi_suhu(suhu)
+        brix_akhir = brix_pengenceran + koreksi
+        
+        st.markdown(f"""
+            <div style="background: rgba(38, 196, 185, 0.1); padding: 25px; border-radius: 20px; border: 1px solid #26c4b9; text-align: center;">
+                <p style="color: white; margin: 0; opacity: 0.8;">Nilai Koreksi Suhu</p>
+                <h3 style="color: #26c4b9; margin: 0;">{koreksi:+.2f}</h3>
+                <div style="margin: 15px 0; border-top: 1px solid rgba(255,255,255,0.1);"></div>
+                <p style="color: white; margin: 0; opacity: 0.8; font-weight: bold;">% BRIX AKHIR</p>
+                <h1 style="color: white; font-size: 60px; margin: 0;">{brix_akhir:.2f}</h1>
+            </div>
+        """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+    
     if st.button("🔙 KEMBALI"): pindah_halaman('dashboard')
+
 elif st.session_state.page == 'db_harian':
     st.markdown("<h2 style='color:white; font-family:Michroma;'>📅 DATABASE HARIAN</h2>", unsafe_allow_html=True)
     if st.button("🔙 KEMBALI"): pindah_halaman('dashboard')
