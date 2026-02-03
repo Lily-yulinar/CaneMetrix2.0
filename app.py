@@ -170,3 +170,5 @@ for i in range(0, len(items), 3):
                         <div style="font-size: 16px; font-weight: 700; letter-spacing: 1px;">{text.upper()}</div>
                     </div>
                 """, unsafe_allow_html=True)
+
+
