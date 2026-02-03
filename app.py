@@ -5,7 +5,7 @@ from streamlit_autorefresh import st_autorefresh
 import base64
 import os
 
-# --- 1. INITIAL STATE ---
+# --- 1. INITIAL STATE (OTAK NAVIGASI) ---
 if 'page' not in st.session_state:
     st.session_state.page = 'dashboard'
 
@@ -18,7 +18,7 @@ now = datetime.datetime.now(tz)
 tgl_skrg = now.strftime("%d %B %Y")
 jam_skrg = now.strftime("%H:%M:%S")
 
-# Data Tabel Koreksi
+# Data Tabel Koreksi (Interpolasi)
 data_koreksi = {
     25: -0.19, 26: -0.12, 27: -0.05, 28: 0.02, 29: 0.09, 30: 0.16,
     31: 0.24, 32: 0.31, 33: 0.38, 34: 0.46, 35: 0.54, 36: 0.62,
@@ -50,7 +50,7 @@ logo_sgn = get_base64_logo("sgn.png")
 logo_lpp = get_base64_logo("lpp.png")
 logo_cane = get_base64_logo("canemetrix.png")
 
-# --- 2. CSS (TAMPILAN ACC LO) ---
+# --- 2. CSS CUSTOM (TAMPILAN MEWAH ACC LO) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Poppins:wght@300;400;700&display=swap');
@@ -77,9 +77,8 @@ st.markdown(f"""
     }}
 
     .logo-cane-large {{
-        height: 180px; /* UKURAN GEDE BEB */
+        height: 180px; /* LOGO GEDE DI KANAN */
         filter: drop-shadow(0 0 20px #26c4b9);
-        transition: 0.5s;
     }}
 
     .menu-card-container {{
@@ -95,6 +94,7 @@ st.markdown(f"""
         box-shadow: 0 0 25px rgba(38, 196, 185, 0.4); transform: translateY(-5px);
     }}
 
+    /* Overlay tombol transparan di atas card */
     .stButton > button {{
         position: absolute; width: 100%; height: 100%; top: 0; left: 0;
         background: transparent !important; border: none !important;
@@ -110,6 +110,7 @@ st.markdown(f"""
 # --- 3. LOGIKA HALAMAN ---
 
 if st.session_state.page == 'dashboard':
+    # HEADER
     c1, c2 = st.columns([2, 1])
     with c1:
         st.markdown(f'<div class="partner-box"><img src="data:image/png;base64,{logo_ptpn}" class="img-partner"><img src="data:image/png;base64,{logo_sgn}" class="img-partner"><img src="data:image/png;base64,{logo_lpp}" class="img-partner"></div>', unsafe_allow_html=True)
@@ -117,7 +118,7 @@ if st.session_state.page == 'dashboard':
         st.selectbox("", ["SHIFT 1", "SHIFT 2", "SHIFT 3"], label_visibility="collapsed")
         st.markdown(f'<div style="text-align: right; color: white; font-family: \'Poppins\';"><span style="font-size: 14px; opacity: 0.7;">{tgl_skrg}</span><br><span style="font-size: 24px; color: #26c4b9; font-weight: bold;">{jam_skrg} WIB</span></div>', unsafe_allow_html=True)
 
-    # HERO DENGAN LOGO GEDE DI KANAN
+    # HERO (LOGO GEDE DI KANAN)
     st.markdown(f'''
         <div class="hero-container">
             <div style="flex: 1.5;">
@@ -130,6 +131,7 @@ if st.session_state.page == 'dashboard':
         </div>
     ''', unsafe_allow_html=True)
 
+    # GRID MENU
     items = [
         ("📝", "Input Data"), ("🧮", "Hitung Analisa"), ("📅", "Database Harian"),
         ("📊", "Database Bulanan"), ("⚖️", "Rekap Stasiun"), ("📈", "Trend"),
@@ -150,14 +152,17 @@ if st.session_state.page == 'dashboard':
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
+                    # SENSOR KLIK
                     if st.button("", key=f"btn_{label}"):
                         if label == "Hitung Analisa":
                             st.session_state.page = 'analisa_tetes'
                             st.rerun()
 
 elif st.session_state.page == 'analisa_tetes':
+    # --- HALAMAN KALKULATOR ANALISA TETES ---
     st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron; margin-bottom:20px;'>🧪 PERHITUNGAN ANALISA TETES</h2>", unsafe_allow_html=True)
-    st.markdown('<div class="hero-container">', unsafe_allow_html=True)
+    
+    st.markdown('<div class="hero-container" style="display:block;">', unsafe_allow_html=True)
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("<h3 style='color:white; font-family:Poppins;'>📥 INPUT</h3>", unsafe_allow_html=True)
@@ -165,7 +170,9 @@ elif st.session_state.page == 'analisa_tetes':
         suhu_obs = st.number_input("Suhu Teramati (°C)", value=28.3, step=0.1, format="%.1f")
         koreksi = hitung_interpolasi(suhu_obs)
         st.markdown(f"<div style='background:rgba(38,196,185,0.2); padding:10px; border-radius:10px; color:#26c4b9; font-weight:bold; margin-top:10px;'>Koreksi Tabel: {koreksi:+.3f}</div>", unsafe_allow_html=True)
+    
     with col2:
+        st.markdown("<h3 style='color:white; font-family:Poppins;'>📤 OUTPUT</h3>", unsafe_allow_html=True)
         bx_x10 = bx_obs * 10
         bx_akhir = bx_x10 + koreksi
         st.markdown(f"""
@@ -177,6 +184,7 @@ elif st.session_state.page == 'analisa_tetes':
             </div>
         """, unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
+
     if st.button("🔙 KEMBALI KE BERANDA", key="btn_back"):
         st.session_state.page = 'dashboard'
         st.rerun()
