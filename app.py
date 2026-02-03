@@ -5,7 +5,7 @@ from streamlit_autorefresh import st_autorefresh
 import base64
 import os
 
-# --- 1. INITIAL STATE & SETUP ---
+# --- 1. INITIAL STATE & SETUP (WAJIB PALING ATAS) ---
 if 'page' not in st.session_state: 
     st.session_state.page = 'dashboard'
 
@@ -39,6 +39,7 @@ def hitung_interpolasi(suhu_user):
             return y0 + (suhu_user - x0) * (y1 - y0) / (x1 - x0)
     return 0.0
 
+# Fungsi Logo
 def get_base64_logo(file_name):
     if os.path.exists(file_name):
         with open(file_name, "rb") as f:
@@ -50,7 +51,7 @@ logo_sgn = get_base64_logo("sgn.png")
 logo_lpp = get_base64_logo("lpp.png")
 logo_cane = get_base64_logo("canemetrix.png")
 
-# --- 2. CSS FIX (BIAR SUB-MENU BALIK NORMAL) ---
+# --- 2. CSS FIX (TAMPILAN TETAP SAMA) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Poppins:wght@300;400;700&display=swap');
@@ -75,100 +76,35 @@ st.markdown(f"""
         text-shadow: 0 0 10px #fff, 0 0 20px #26c4b9, 0 0 40px #26c4b9;
     }}
 
-    /* CSS FIX UNTUK MENU CARD */
     .menu-card-container {{
-        position: relative;
-        background: rgba(255, 255, 255, 0.07);
-        backdrop-filter: blur(10px);
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        height: 200px;
-        transition: 0.3s;
-        margin-bottom: 25px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+        position: relative; background: rgba(255, 255, 255, 0.07);
+        backdrop-filter: blur(10px); border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.1); height: 200px;
+        transition: 0.3s; margin-bottom: 25px;
+        display: flex; flex-direction: column; justify-content: center; align-items: center;
     }}
 
     .menu-card-container:hover {{
-        background: rgba(38, 196, 185, 0.15);
-        border: 1px solid #26c4b9;
-        box-shadow: 0 0 25px rgba(38, 196, 185, 0.4);
-        transform: translateY(-5px);
+        background: rgba(38, 196, 185, 0.15); border: 1px solid #26c4b9;
+        box-shadow: 0 0 25px rgba(38, 196, 185, 0.4); transform: translateY(-5px);
     }}
 
-    /* Sembunyikan tombol streamlit asli tapi tetep bisa diklik */
     .stButton > button {{
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        background: transparent !important;
-        border: none !important;
-        color: transparent !important;
-        z-index: 10;
+        position: absolute; width: 100%; height: 100%;
+        background: transparent !important; border: none !important;
+        color: transparent !important; z-index: 10;
     }}
 
-    .menu-content {{
-        text-align: center;
-        color: white;
-        pointer-events: none; /* Biar klik nembus ke button di bawahnya */
-    }}
-
+    .menu-content {{ text-align: center; color: white; pointer-events: none; }}
     .menu-icon {{ font-size: 50px; margin-bottom: 10px; display: block; }}
     .menu-label {{ font-family: 'Poppins'; font-weight: 700; font-size: 15px; letter-spacing: 1px; text-transform: uppercase; }}
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. HALAMAN DASHBOARD ---
-if st.session_state.page == 'dashboard':
-    # Header
-    c1, c2 = st.columns([2, 1])
-    with c1:
-        st.markdown(f'<div class="partner-box"><img src="data:image/png;base64,{logo_ptpn}" class="img-partner"><img src="data:image/png;base64,{logo_sgn}" class="img-partner"><img src="data:image/png;base64,{logo_lpp}" class="img-partner"></div>', unsafe_allow_html=True)
-    with c2:
-        st.selectbox("", ["SHIFT 1", "SHIFT 2", "SHIFT 3"], label_visibility="collapsed")
-        st.markdown(f'<div style="text-align: right; color: white; font-family: \'Poppins\';"><span style="font-size: 14px; opacity: 0.7;">{tgl_skrg}</span><br><span style="font-size: 24px; color: #26c4b9; font-weight: bold;">{jam_skrg} WIB</span></div>', unsafe_allow_html=True)
+# --- 3. LOGIKA HALAMAN (DIPERBAIKI) ---
 
-    # Hero
-    st.markdown(f'''
-        <div class="hero-container">
-            <img src="data:image/png;base64,{logo_cane}" style="height:110px; margin-bottom:10px; filter: drop-shadow(0 0 10px #26c4b9);">
-            <h1 class="title-text">CANE METRIX</h1>
-            <p style="color:#26c4b9; font-family:'Poppins'; font-weight:700; letter-spacing:5px; margin-top:5px;">ACCELERATING QA PERFORMANCE</p>
-        </div>
-    ''', unsafe_allow_html=True)
-
-    # Grid Menu (3 Kolom)
-    items = [
-        ("📝", "Input Data"), ("🧮", "Hitung"), ("📅", "Database Harian"),
-        ("📊", "Database Bulanan"), ("⚖️", "Rekap Stasiun"), ("📈", "Trend"),
-        ("⚙️", "Pengaturan"), ("📥", "Export/Import"), ("👤", "Akun")
-    ]
-
-    for i in range(0, len(items), 3):
-        cols = st.columns(3)
-        for j in range(3):
-            if i + j < len(items):
-                icon, label = items[i+j]
-                with cols[j]:
-                    # Container Visual
-                    st.markdown(f"""
-                        <div class="menu-card-container">
-                            <div class="menu-content">
-                                <span class="menu-icon">{icon}</span>
-                                <span class="menu-label">{label}</span>
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
-                    # Tombol Transparan (Invisible)
-                    if st.button("", key=f"btn_{label}"):
-                        if label == "Hitung":
-                            st.session_state.page = 'analisa_tetes'
-                            st.rerun()
-
-# --- 4. HALAMAN ANALISA TETES ---
-elif st.session_state.page == 'analisa_tetes':
+# --- A. HALAMAN ANALISA TETES ---
+if st.session_state.page == 'analisa_tetes':
     st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron; margin-bottom:20px;'>🧪 PERHITUNGAN ANALISA TETES</h2>", unsafe_allow_html=True)
     
     st.markdown('<div class="hero-container">', unsafe_allow_html=True)
@@ -194,6 +130,52 @@ elif st.session_state.page == 'analisa_tetes':
         """, unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
+    # Tombol Kembali
     if st.button("🔙 KEMBALI"):
         st.session_state.page = 'dashboard'
         st.rerun()
+
+# --- B. HALAMAN DASHBOARD UTAMA ---
+else:
+    # Header
+    c1, c2 = st.columns([2, 1])
+    with c1:
+        st.markdown(f'<div class="partner-box"><img src="data:image/png;base64,{logo_ptpn}" class="img-partner"><img src="data:image/png;base64,{logo_sgn}" class="img-partner"><img src="data:image/png;base64,{logo_lpp}" class="img-partner"></div>', unsafe_allow_html=True)
+    with c2:
+        st.selectbox("", ["SHIFT 1", "SHIFT 2", "SHIFT 3"], label_visibility="collapsed")
+        st.markdown(f'<div style="text-align: right; color: white; font-family: \'Poppins\';"><span style="font-size: 14px; opacity: 0.7;">{tgl_skrg}</span><br><span style="font-size: 24px; color: #26c4b9; font-weight: bold;">{jam_skrg} WIB</span></div>', unsafe_allow_html=True)
+
+    # Hero
+    st.markdown(f'''
+        <div class="hero-container">
+            <img src="data:image/png;base64,{logo_cane}" style="height:110px; margin-bottom:10px; filter: drop-shadow(0 0 10px #26c4b9);">
+            <h1 class="title-text">CANE METRIX</h1>
+            <p style="color:#26c4b9; font-family:\'Poppins\'; font-weight:700; letter-spacing:5px; margin-top:5px;">ACCELERATING QA PERFORMANCE</p>
+        </div>
+    ''', unsafe_allow_html=True)
+
+    # Grid Menu
+    items = [
+        ("📝", "Input Data"), ("🧮", "Hitung"), ("📅", "Database Harian"),
+        ("📊", "Database Bulanan"), ("⚖️", "Rekap Stasiun"), ("📈", "Trend"),
+        ("⚙️", "Pengaturan"), ("📥", "Export/Import"), ("👤", "Akun")
+    ]
+
+    for i in range(0, len(items), 3):
+        cols = st.columns(3)
+        for j in range(3):
+            if i + j < len(items):
+                icon, label = items[i+j]
+                with cols[j]:
+                    st.markdown(f"""
+                        <div class="menu-card-container">
+                            <div class="menu-content">
+                                <span class="menu-icon">{icon}</span>
+                                <span class="menu-label">{label}</span>
+                            </div>
+                        </div>
+                    """, unsafe_allow_html=True)
+                    if st.button("", key=f"btn_{label}"):
+                        if label == "Hitung":
+                            st.session_state.page = 'analisa_tetes'
+                            st.rerun()
