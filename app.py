@@ -145,4 +145,23 @@ elif st.session_state.page == 'analisa_tetes':
     st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>🧪 PERHITUNGAN ANALISA TETES</h2>", unsafe_allow_html=True)
     
     with st.container():
-        st.markdown('<div class="hero-container" style="display
+        st.markdown('<div class="hero-container" style="display:block; text-align:center;">', unsafe_allow_html=True)
+        c1, c2 = st.columns(2)
+        with c1:
+            bx_obs = st.number_input("Brix Teramati", value=8.80, format="%.2f")
+            suhu_obs = st.number_input("Suhu Teramati (°C)", value=28.3, format="%.1f")
+            koreksi = hitung_interpolasi(suhu_obs)
+            st.success(f"Koreksi: {koreksi:+.3f}")
+        with c2:
+            bx_akhir = (bx_obs * 10) + koreksi
+            st.markdown(f"""
+                <div style="background: rgba(38, 196, 185, 0.2); padding: 20px; border-radius: 20px; border: 2px solid #26c4b9;">
+                    <h4 style="color:white;">% BRIX AKHIR</h4>
+                    <h1 style="color:#26c4b9; font-size:60px; font-family:Orbitron;">{bx_akhir:.3f}</h1>
+                </div>
+            """, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    if st.button("🔙 KEMBALI"):
+        st.session_state.page = 'dashboard'
+        st.rerun()
