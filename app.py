@@ -50,10 +50,10 @@ logo_sgn = get_base64_logo("sgn.png")
 logo_lpp = get_base64_logo("lpp.png")
 logo_cane = get_base64_logo("canemetrix.png")
 
-# --- 2. CSS (TAMPILAN MEWAH) ---
+# --- 2. CSS (UPDATE FONT & LAYOUT) ---
 st.markdown(f"""
     <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Poppins:wght@300;400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Michroma&family=Rajdhani:wght@700&family=Poppins:wght@300;400;700&display=swap');
     
     .stApp {{
         background: linear-gradient(rgba(0, 10, 30, 0.75), rgba(0, 10, 30, 0.75)), 
@@ -61,65 +61,80 @@ st.markdown(f"""
         background-size: cover; background-position: center; background-attachment: fixed;
     }}
 
-    /* KOTAK LOGO KIRI ATAS LEBIH PANJANG */
+    /* KOTAK LOGO KIRI ATAS */
     .partner-box {{ 
         background: white; 
-        padding: 12px 50px; 
+        padding: 12px 60px; /* Lebih lebar sesuai request */
         border-radius: 15px; 
         display: inline-flex; 
         align-items: center; 
-        gap: 40px; 
+        gap: 50px; /* Jarak antar logo lebih plong */
         box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }}
-    .img-partner {{ height: 38px; width: auto; }}
+    .img-partner {{ height: 35px; width: auto; }}
 
     .hero-container {{
-        background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(15px);
-        border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 30px;
-        padding: 40px; margin: 10px auto 30px auto; display: flex; 
+        background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 40px;
+        padding: 50px; margin: 10px auto 30px auto; display: flex; 
         justify-content: space-between; align-items: center; max-width: 95%;
     }}
 
+    /* FONT JUDUL BARU - LEBIH KOTAK */
     .title-text {{
-        font-family: 'Orbitron'; color: white; font-size: 58px; letter-spacing: 10px; margin: 0; font-weight: 900;
-        text-shadow: 0 0 10px #fff, 0 0 20px #26c4b9, 0 0 40px #26c4b9;
+        font-family: 'Michroma', sans-serif; 
+        color: white; 
+        font-size: 62px; 
+        letter-spacing: 8px; 
+        margin: 0; 
+        font-weight: 400;
+        text-shadow: 0 0 15px rgba(255,255,255,0.5), 0 0 30px #26c4b9;
+        text-transform: uppercase;
+    }}
+
+    .sub-title {{
+        color:#26c4b9; 
+        font-family: 'Poppins'; 
+        font-weight: 700; 
+        letter-spacing: 6px; 
+        margin-top: 15px;
+        opacity: 0.9;
     }}
 
     .logo-cane-large {{
-        height: 190px; /* LOGO CANEMETRIX GEDE */
-        filter: drop-shadow(0 0 20px #26c4b9);
+        height: 200px; /* Logo CaneMetrix Gede di Kanan */
+        filter: drop-shadow(0 0 25px #26c4b9);
     }}
 
     .menu-card-container {{
         position: relative; background: rgba(255, 255, 255, 0.07);
         backdrop-filter: blur(10px); border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.1); height: 200px;
+        border: 1px solid rgba(255, 255, 255, 0.1); height: 180px;
         transition: 0.3s; margin-bottom: 25px; display: flex;
         flex-direction: column; justify-content: center; align-items: center;
     }}
 
     .menu-card-container:hover {{
         background: rgba(38, 196, 185, 0.15); border: 1px solid #26c4b9;
-        box-shadow: 0 0 25px rgba(38, 196, 185, 0.4); transform: translateY(-5px);
+        box-shadow: 0 0 30px rgba(38, 196, 185, 0.4); transform: translateY(-8px);
     }}
 
-    /* Overlay Tombol */
+    /* Overlay Tombol Anti-Macet */
     .stButton > button {{
-        position: absolute !important; width: 100% !important; height: 200px !important;
+        position: absolute !important; width: 100% !important; height: 180px !important;
         top: 0 !important; left: 0 !important; background: transparent !important;
         color: transparent !important; border: none !important; z-index: 999 !important;
     }}
 
-    .menu-content {{ text-align: center; color: white; pointer-events: none; }}
-    .menu-icon {{ font-size: 55px; margin-bottom: 10px; display: block; }}
-    .menu-label {{ font-family: 'Poppins'; font-weight: 700; font-size: 14px; text-transform: uppercase; }}
+    .menu-icon {{ font-size: 50px; margin-bottom: 10px; }}
+    .menu-label {{ font-family: 'Poppins'; font-weight: 700; font-size: 14px; color: white; }}
     </style>
     """, unsafe_allow_html=True)
 
 # --- 3. LOGIKA HALAMAN ---
 
 if st.session_state.page == 'dashboard':
-    # HEADER (LOGO PARTNER & WAKTU)
+    # HEADER
     c_top1, c_top2 = st.columns([2, 1])
     with c_top1:
         st.markdown(f'''
@@ -132,12 +147,12 @@ if st.session_state.page == 'dashboard':
     with c_top2:
         st.markdown(f'<div style="text-align: right; color: white; font-family: \'Poppins\';"><span>{tgl_skrg}</span><br><b style="color:#26c4b9; font-size:24px;">{jam_skrg} WIB</b></div>', unsafe_allow_html=True)
 
-    # HERO (LOGO CANEMETRIX DI KANAN)
+    # HERO (FONT KOTAK & LOGO KANAN)
     st.markdown(f'''
         <div class="hero-container">
             <div style="flex: 1.5;">
                 <h1 class="title-text">CANE METRIX</h1>
-                <p style="color:#26c4b9; font-family:\'Poppins\'; font-weight:700; letter-spacing:5px; margin-top:10px;">ACCELERATING QA PERFORMANCE</p>
+                <p class="sub-title">ACCELERATING QA PERFORMANCE</p>
             </div>
             <div style="flex: 0.5; text-align: right;">
                 <img src="data:image/png;base64,{logo_cane}" class="logo-cane-large">
@@ -145,57 +160,49 @@ if st.session_state.page == 'dashboard':
         </div>
     ''', unsafe_allow_html=True)
 
-    # GRID MENU (MANUAL BIAR STABIL)
-    row1_col1, row1_col2, row1_col3 = st.columns(3)
-    with row1_col1:
-        st.markdown('<div class="menu-card-container"><div class="menu-content"><span class="menu-icon">📝</span><span class="menu-label">Input Data</span></div></div>', unsafe_allow_html=True)
+    # MENU GRID
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown('<div class="menu-card-container"><div class="menu-icon">📝</div><div class="menu-label">INPUT DATA</div></div>', unsafe_allow_html=True)
         st.button("", key="btn_input")
-
-    with row1_col2:
-        st.markdown('<div class="menu-card-container"><div class="menu-content"><span class="menu-icon">🧮</span><span class="menu-label">Hitung Analisa</span></div></div>', unsafe_allow_html=True)
+    with col2:
+        st.markdown('<div class="menu-card-container"><div class="menu-icon">🧮</div><div class="menu-label">HITUNG ANALISA</div></div>', unsafe_allow_html=True)
         if st.button("", key="btn_hitung"):
             st.session_state.page = 'analisa_tetes'
             st.rerun()
-
-    with row1_col3:
-        st.markdown('<div class="menu-card-container"><div class="menu-content"><span class="menu-icon">📅</span><span class="menu-label">Database Harian</span></div></div>', unsafe_allow_html=True)
+    with col3:
+        st.markdown('<div class="menu-card-container"><div class="menu-icon">📅</div><div class="menu-label">DATABASE HARIAN</div></div>', unsafe_allow_html=True)
         st.button("", key="btn_harian")
 
-    row2_col1, row2_col2, row2_col3 = st.columns(3)
-    with row2_col1:
-        st.markdown('<div class="menu-card-container"><div class="menu-content"><span class="menu-icon">📊</span><span class="menu-label">Database Bulanan</span></div></div>', unsafe_allow_html=True)
+    col4, col5, col6 = st.columns(3)
+    with col4:
+        st.markdown('<div class="menu-card-container"><div class="menu-icon">📊</div><div class="menu-label">DATABASE BULANAN</div></div>', unsafe_allow_html=True)
         st.button("", key="btn_bulanan")
-    with row2_col2:
-        st.markdown('<div class="menu-card-container"><div class="menu-content"><span class="menu-icon">⚖️</span><span class="menu-label">Rekap Stasiun</span></div></div>', unsafe_allow_html=True)
+    with col5:
+        st.markdown('<div class="menu-card-container"><div class="menu-icon">⚖️</div><div class="menu-label">REKAP STASIUN</div></div>', unsafe_allow_html=True)
         st.button("", key="btn_rekap")
-    with row2_col3:
-        st.markdown('<div class="menu-card-container"><div class="menu-content"><span class="menu-icon">📈</span><span class="menu-label">Trend</span></div></div>', unsafe_allow_html=True)
+    with col6:
+        st.markdown('<div class="menu-card-container"><div class="menu-icon">📈</div><div class="menu-label">TREND</div></div>', unsafe_allow_html=True)
         st.button("", key="btn_trend")
 
 elif st.session_state.page == 'analisa_tetes':
-    # HALAMAN ANALISA TETES
-    st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron; margin-bottom:20px;'>🧪 PERHITUNGAN ANALISA TETES</h2>", unsafe_allow_html=True)
-    
+    st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Michroma;'>🧪 PERHITUNGAN ANALISA TETES</h2>", unsafe_allow_html=True)
     st.markdown('<div class="hero-container" style="display:block;">', unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown("<h3 style='color:white;'>📥 INPUT</h3>", unsafe_allow_html=True)
         bx_obs = st.number_input("Brix Teramati", value=8.80, step=0.01, format="%.2f")
         suhu_obs = st.number_input("Suhu Teramati (°C)", value=28.3, step=0.1, format="%.1f")
         koreksi = hitung_interpolasi(suhu_obs)
-        st.info(f"Koreksi Tabel: {koreksi:+.3f}")
-    
+        st.write(f"Koreksi: {koreksi:+.3f}")
     with c2:
-        st.markdown("<h3 style='color:white;'>📤 OUTPUT</h3>", unsafe_allow_html=True)
         bx_akhir = (bx_obs * 10) + koreksi
         st.markdown(f"""
             <div style="background: rgba(38, 196, 185, 0.2); padding: 30px; border-radius: 20px; border: 2px solid #26c4b9; text-align: center;">
                 <h4 style="color:white; margin:0;">% BRIX AKHIR</h4>
-                <h1 style="color:#26c4b9; font-family:Orbitron; font-size:60px; margin:10px 0;">{bx_akhir:.3f}</h1>
+                <h1 style="color:#26c4b9; font-family:Michroma; font-size:55px; margin:10px 0;">{bx_akhir:.3f}</h1>
             </div>
         """, unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-
-    if st.button("🔙 KEMBALI KE BERANDA", key="btn_back"):
+    if st.button("🔙 KEMBALI"):
         st.session_state.page = 'dashboard'
         st.rerun()
