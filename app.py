@@ -6,8 +6,7 @@ import base64
 import os
 
 # --- 1. INITIAL STATE & SETUP ---
-# Pastikan session state didefinisikan paling atas sebelum apapun
-if 'page' not in st.session_state: 
+if 'page' not in st.session_state:
     st.session_state.page = 'dashboard'
 
 st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
@@ -98,7 +97,6 @@ st.markdown(f"""
         transform: translateY(-5px);
     }}
 
-    /* CSS Button Invisible agar Card bisa diklik */
     .stButton > button {{
         position: absolute; width: 100%; height: 100%;
         background: transparent !important; border: none !important;
@@ -111,7 +109,7 @@ st.markdown(f"""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 3. LOGIKA HALAMAN (UTAMA) ---
+# --- 3. LOGIKA HALAMAN ---
 
 if st.session_state.page == 'dashboard':
     # --- HEADER DASHBOARD ---
@@ -152,7 +150,6 @@ if st.session_state.page == 'dashboard':
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
-                    # Tombol pemicu rute
                     if st.button("", key=f"btn_{label}"):
                         if label == "Hitung":
                             st.session_state.page = 'analisa_tetes'
@@ -166,17 +163,15 @@ elif st.session_state.page == 'analisa_tetes':
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("<h3 style='color:white; font-family:Poppins;'>📥 INPUT</h3>", unsafe_allow_html=True)
-        # Sesuai logika lo: Brix Teramati & Suhu Teramati
         bx_obs = st.number_input("Brix Teramati", value=8.80, step=0.01, format="%.2f")
         suhu_obs = st.number_input("Suhu Teramati (°C)", value=28.3, step=0.1, format="%.1f")
         
-        # Interpolasi Otomatis
         koreksi = hitung_interpolasi(suhu_obs)
         st.markdown(f"<div style='background:rgba(38,196,185,0.2); padding:10px; border-radius:10px; color:#26c4b9; font-weight:bold; margin-top:10px;'>Koreksi Tabel: {koreksi:+.3f}</div>", unsafe_allow_html=True)
     
     with col2:
         st.markdown("<h3 style='color:white; font-family:Poppins;'>📤 OUTPUT</h3>", unsafe_allow_html=True)
-        # RUMUS: (Brix Teramati x 10) + Hasil Interpolasi
+        # OPERASI INTERPOLASI & %BRIX SESUAI PENJELASAN LO
         bx_x10 = bx_obs * 10
         bx_akhir = bx_x10 + koreksi
         
@@ -190,7 +185,6 @@ elif st.session_state.page == 'analisa_tetes':
         """, unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Tombol balik ke Dashboard
     if st.button("🔙 KEMBALI KE BERANDA", key="btn_back"):
         st.session_state.page = 'dashboard'
         st.rerun()
