@@ -29,8 +29,8 @@ l_ptpn = get_base64_logo("ptpn.png")
 l_lpp = get_base64_logo("lpp.png")
 l_cane = get_base64_logo("canemetrix.png")
 
-# Link Backup BUMN (Jika file lokal tetap tidak terbaca)
-url_bumn_ri = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Logo_BUMN.svg/512px-Logo_BUMN.svg.png"
+# Link Backup BUMN (Wajib ada buat jaga-jaga)
+url_bumn_backup = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Logo_BUMN.svg/512px-Logo_BUMN.svg.png"
 
 st.markdown(f"""
     <style>
@@ -42,20 +42,20 @@ st.markdown(f"""
         background-size: cover;
     }}
 
-    /* KOTAK LOGO: Dibikin fleksibel dan lebih luas */
+    /* PARTNER BOX - GUE LEBARIN PAKSA DI SINI */
     .partner-box {{ 
         background: white; 
-        padding: 12px 25px; 
-        border-radius: 12px; 
+        padding: 15px 40px; /* Padding lebih lega */
+        border-radius: 15px; 
         display: flex; 
         align-items: center; 
-        gap: 25px; 
-        width: fit-content; /* Biar melar sendiri */
-        min-width: 320px;   /* Gue panjangin batas minimalnya */
-        box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+        justify-content: space-around; /* Sebar logo secara merata */
+        gap: 30px; 
+        width: 450px !important; /* LOCK LEBARNYA BIAR GAK MENCIUT */
+        box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+        margin-bottom: 10px;
     }}
     
-    /* Styling khusus logo biar rapi */
     .partner-box img {{ 
         height: 35px; 
         width: auto; 
@@ -82,11 +82,6 @@ st.markdown(f"""
         border-radius: 20px !important; height: 160px !important; width: 100% !important;
         font-size: 18px !important; font-weight: 700 !important;
     }}
-    div.stButton > button:hover {{
-        border: 1px solid #26c4b9 !important;
-        background: rgba(38, 196, 185, 0.2) !important;
-        transform: translateY(-5px);
-    }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -95,16 +90,16 @@ st.markdown(f"""
 def render_header():
     h1, h2 = st.columns([3, 1])
     with h1:
-        # Tentukan sumber logo BUMN (Prioritas file lokal, fallback ke URL)
-        src_kb = f"data:image/png;base64,{l_kb}" if l_kb else url_bumn_ri
+        # Gunakan file lokal jika ada, jika tidak gunakan URL backup
+        src_kb = f"data:image/png;base64,{l_kb}" if l_kb else url_bumn_backup
         
-        # HTML dengan urutan BUMN, SGN, PTPN, LPP
+        # HTML Header dengan Box yang sudah dilebarkan
         html_logos = f'''
         <div class="partner-box">
-            <img src="{src_kb}" title="Kementerian BUMN">
-            <img src="data:image/png;base64,{l_sgn if l_sgn else ''}" title="SGN">
-            <img src="data:image/png;base64,{l_ptpn if l_ptpn else ''}" title="PTPN III">
-            <img src="data:image/png;base64,{l_lpp if l_lpp else ''}" title="LPP">
+            <img src="{src_kb}" alt="BUMN">
+            <img src="data:image/png;base64,{l_sgn if l_sgn else ''}" alt="SGN">
+            <img src="data:image/png;base64,{l_ptpn if l_ptpn else ''}" alt="PTPN">
+            <img src="data:image/png;base64,{l_lpp if l_lpp else ''}" alt="LPP">
         </div>
         '''
         st.markdown(html_logos, unsafe_allow_html=True)
@@ -122,8 +117,7 @@ def render_header():
 
 render_header()
 
-# --- 4. NAVIGATION LOGIC ---
-
+# --- 4. DASHBOARD & NAV ---
 if st.session_state.page == 'dashboard':
     st.markdown(f'''
     <div class="glass-card" style="display:flex; justify-content:space-between; align-items:center; margin-top:20px; margin-bottom:30px;">
@@ -131,7 +125,7 @@ if st.session_state.page == 'dashboard':
             <h1 style="font-family:'Michroma'; color:white; font-size:clamp(30px, 5vw, 55px); margin:0; letter-spacing:8px;">CANE METRIX</h1>
             <p style="color:#26c4b9; font-family:'Poppins'; font-weight:700; letter-spacing:5px;">ACCELERATING QA PERFORMANCE</p>
         </div>
-        <img src="data:image/png;base64,{l_cane if l_cane else ''}" height="150" style="filter: drop-shadow(0 0 10px rgba(38,196,185,0.4));">
+        <img src="data:image/png;base64,{l_cane if l_cane else ''}" height="150">
     </div>
     ''', unsafe_allow_html=True)
 
@@ -143,14 +137,13 @@ if st.session_state.page == 'dashboard':
     with c3: 
         if st.button("📅\nDATABASE HARIAN"): pindah_halaman('db_harian')
 
+# Sisa logika halaman (input_data, dll) tetap sama...
 elif st.session_state.page == 'input_data':
     st.markdown("<h2 style='color:white; font-family:Michroma;'>📝 INPUT DATA</h2>", unsafe_allow_html=True)
     if st.button("🔙 KEMBALI"): pindah_halaman('dashboard')
-
 elif st.session_state.page == 'analisa_tetes':
     st.markdown("<h2 style='color:white; font-family:Michroma;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
     if st.button("🔙 KEMBALI"): pindah_halaman('dashboard')
-
 elif st.session_state.page == 'db_harian':
     st.markdown("<h2 style='color:white; font-family:Michroma;'>📅 DATABASE HARIAN</h2>", unsafe_allow_html=True)
     if st.button("🔙 KEMBALI"): pindah_halaman('dashboard')
