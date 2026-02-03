@@ -8,27 +8,32 @@ import os
 # --- 1. SETTING PAGE ---
 st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
 
-# Inisialisasi State Halaman
+# Inisialisasi State Halaman agar tidak reset saat refresh
 if 'page' not in st.session_state:
     st.session_state.page = 'dashboard'
 
 def pindah_halaman(nama_halaman):
     st.session_state.page = nama_halaman
+    # Kita tidak perlu st.rerun() di sini karena fragment header sudah menangani refresh
 
-# --- 2. FUNGSI LOGO & CSS ---
+# --- 2. FUNGSI LOAD LOGO & CSS ---
 def get_base64_logo(file_name):
-    if os.path.exists(file_name):
-        with open(file_name, "rb") as f:
-            return base64.b64encode(f.read()).decode()
+    # Coba beberapa kemungkinan lokasi/nama file
+    possible_names = [file_name, file_name.lower(), file_name.upper()]
+    for name in possible_names:
+        if os.path.exists(name):
+            with open(name, "rb") as f:
+                return base64.b64encode(f.read()).decode()
     return None
 
-# Load Aset
+# Load Semua Logo
 l_kb = get_base64_logo("kb.png")
 l_sgn = get_base64_logo("sgn.png")
 l_ptpn = get_base64_logo("ptpn.png")
 l_lpp = get_base64_logo("lpp.png")
 l_cane = get_base64_logo("canemetrix.png")
 
+# CSS Custom
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Michroma&family=Poppins:wght@400;700;900&display=swap');
@@ -39,31 +44,36 @@ st.markdown(f"""
         background-size: cover;
     }}
 
+    /* KOTAK LOGO PUTIH - FIX UNTUK KB.PNG */
     .partner-box {{ 
-        background: white; padding: 10px 25px; border-radius: 12px; 
-        display: flex; align-items: center; gap: 20px; width: fit-content;
+        background: white; 
+        padding: 10px 25px; 
+        border-radius: 12px; 
+        display: flex; 
+        align-items: center; 
+        gap: 20px; 
+        width: fit-content;
     }}
-    .partner-box img {{ height: 30px; width: auto; object-fit: contain; }}
+    .partner-box img {{ height: 35px; width: auto; object-fit: contain; }}
 
     .jam-digital {{
         color: #26c4b9; font-size: 50px; font-weight: 900; 
-        font-family: 'Poppins'; line-height: 1.1; text-shadow: 0 0 15px rgba(38, 196, 185, 0.6);
+        font-family: 'Poppins'; line-height: 1.1; 
+        text-shadow: 0 0 15px rgba(38, 196, 185, 0.6);
     }}
 
-    /* Card Styling */
     .glass-card {{
         background: rgba(255, 255, 255, 0.05); 
         backdrop-filter: blur(15px); 
-        padding: 30px; 
+        padding: 40px; 
         border-radius: 30px; 
         border: 1px solid rgba(255, 255, 255, 0.1);
     }}
 
-    /* Button Styling */
     div.stButton > button {{
         background: rgba(255, 255, 255, 0.07) !important;
         color: white !important; border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 20px !important; height: 150px !important; width: 100% !important;
+        border-radius: 20px !important; height: 160px !important; width: 100% !important;
         font-size: 18px !important; font-weight: 700 !important; transition: 0.3s;
     }}
     div.stButton > button:hover {{
@@ -74,18 +84,23 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. COMPONENT: HEADER & CLOCK ---
+# --- 3. COMPONENT: HEADER & REAL-TIME CLOCK ---
 @st.fragment
 def render_header():
     h1, h2 = st.columns([3, 1])
     with h1:
+        # Tampilkan Logo Box
         html_logos = '<div class="partner-box">'
-        for img_data in [l_kb, l_sgn, l_ptpn, l_lpp]:
+        # Urutan: KB, SGN, PTPN, LPP
+        for label, img_data in [("BUMN", l_kb), ("SGN", l_sgn), ("PTPN", l_ptpn), ("LPP", l_lpp)]:
             if img_data:
-                html_logos += f'<img src="data:image/png;base64,{img_data}">'
+                html_logos += f'<img src="data:image/png;base64,{img_data}" title="{label}">'
         html_logos += '</div>'
         st.markdown(html_logos, unsafe_allow_html=True)
-        if not l_kb: st.caption("⚠️ kb.png not found")
+        
+        # Peringatan jika KB.png tidak ada
+        if not l_kb:
+            st.warning("⚠️ File 'kb.png' tidak ditemukan. Pastikan file ada di folder aplikasi.")
 
     with h2:
         tz = pytz.timezone('Asia/Jakarta')
@@ -96,7 +111,9 @@ def render_header():
                 <div class="jam-digital">{now.strftime("%H:%M:%S")}</div>
             </div>
         ''', unsafe_allow_html=True)
-    st_autorefresh(interval=1000, key="global_refresh")
+    
+    # Auto-refresh khusus untuk header (jam) setiap 1 detik
+    st_autorefresh(interval=1000, key="clock_refresh")
 
 render_header()
 
@@ -110,7 +127,7 @@ if st.session_state.page == 'dashboard':
             <h1 style="font-family:'Michroma'; color:white; font-size:clamp(30px, 5vw, 55px); margin:0; letter-spacing:8px;">CANE METRIX</h1>
             <p style="color:#26c4b9; font-family:'Poppins'; font-weight:700; letter-spacing:5px;">ACCELERATING QA PERFORMANCE</p>
         </div>
-        <img src="data:image/png;base64,{l_cane}" height="150">
+        <img src="data:image/png;base64,{l_cane if l_cane else ''}" height="150">
     </div>
     ''', unsafe_allow_html=True)
 
@@ -125,7 +142,6 @@ if st.session_state.page == 'dashboard':
 # --- PAGE: INPUT DATA ---
 elif st.session_state.page == 'input_data':
     st.markdown("<h2 style='color:white; font-family:Michroma;'>📝 INPUT DATA QA</h2>", unsafe_allow_html=True)
-    
     with st.container(border=True):
         col_a, col_b = st.columns(2)
         with col_a:
@@ -136,36 +152,29 @@ elif st.session_state.page == 'input_data':
             st.selectbox("Shift", ["Shift 1", "Shift 2", "Shift 3"])
         
         if st.button("SIMPAN DATA"):
-            st.success("Data berhasil disimpan ke sistem!")
-            
+            st.success("Data berhasil disimpan!")
+    
     if st.button("🔙 KEMBALI"): pindah_halaman('dashboard')
 
 # --- PAGE: ANALISA TETES ---
 elif st.session_state.page == 'analisa_tetes':
-    st.markdown("<h2 style='color:white; font-family:Michroma;'>🧪 ANALISA TETES (CALCULATOR)</h2>", unsafe_allow_html=True)
-    
+    st.markdown("<h2 style='color:white; font-family:Michroma;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
     with st.container(border=True):
         c1, c2 = st.columns(2)
         with c1:
-            brix = st.number_input("Brix (%)", format="%.2f")
-            pol = st.number_input("Pol (%)", format="%.2f")
+            brix = st.number_input("Brix (%)", format="%.2f", value=0.0)
+            pol = st.number_input("Pol (%)", format="%.2f", value=0.0)
         with c2:
-            # Contoh rumus sederhana
             hk = (pol / brix) * 100 if brix > 0 else 0
-            st.metric("Hasil HK (Harkat Kemurnian)", f"{hk:.2f}")
+            st.metric("Harkat Kemurnian (HK)", f"{hk:.2f}%")
             
     if st.button("🔙 KEMBALI"): pindah_halaman('dashboard')
 
 # --- PAGE: DATABASE ---
 elif st.session_state.page == 'db_harian':
     st.markdown("<h2 style='color:white; font-family:Michroma;'>📅 DATABASE HARIAN</h2>", unsafe_allow_html=True)
-    # Simulasi Tabel
     import pandas as pd
-    df_dummy = pd.DataFrame({
-        'Tanggal': [datetime.date.today()],
-        'Kebun': ['Kebun A'],
-        'HK': [75.5]
-    })
-    st.table(df_dummy)
+    df = pd.DataFrame({'Contoh': ['Data 1', 'Data 2'], 'Nilai': [80.5, 78.2]})
+    st.dataframe(df, use_container_width=True)
     
     if st.button("🔙 KEMBALI"): pindah_halaman('dashboard')
