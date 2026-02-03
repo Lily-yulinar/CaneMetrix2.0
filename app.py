@@ -5,26 +5,25 @@ from streamlit_autorefresh import st_autorefresh
 import numpy as np
 
 # ===============================
-# 1. CONFIG & PAGE SETUP
+# CONFIG
 # ===============================
 st.set_page_config(
     page_title="CaneMetrix 2.0",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    layout="wide"
 )
 
 # ===============================
-# 2. URL NAVIGATION (FIXED)
+# INIT PAGE STATE
 # ===============================
-query_params = st.query_params
-current_page = query_params.get("p", ["dash"])[0]
+if "page" not in st.session_state:
+    st.session_state.page = "dash"
 
 def navigasi(target):
-    st.query_params.clear()
-    st.query_params["p"] = target
+    st.session_state.page = target
+    st.rerun()
 
 # ===============================
-# 3. DATA KOREKSI BRIX
+# DATA KOREKSI BRIX
 # ===============================
 data_koreksi = {
     25: -0.19, 26: -0.12, 27: -0.05, 28: 0.02, 29: 0.09,
@@ -35,21 +34,18 @@ data_koreksi = {
 }
 
 def hitung_koreksi(suhu):
-    s_keys = sorted(data_koreksi.keys())
-    s_vals = [data_koreksi[k] for k in s_keys]
-    return float(np.interp(suhu, s_keys, s_vals))
+    keys = sorted(data_koreksi.keys())
+    vals = [data_koreksi[k] for k in keys]
+    return float(np.interp(suhu, keys, vals))
 
 # ===============================
-# 4. CUSTOM CSS
+# CSS
 # ===============================
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Michroma&family=Poppins:wght@400;700&display=swap');
 
-.stApp {
-    background: #0d1117;
-    color: white;
-}
+.stApp { background: #0d1117; color: white; }
 
 div.stButton > button {
     height: 160px;
@@ -72,36 +68,35 @@ div.stButton > button:hover {
     border-radius: 20px;
     padding: 40px;
     text-align: center;
-    background: rgba(38, 196, 185, 0.05);
+    background: rgba(38,196,185,0.05);
 }
 
-.jam-digital {
+.jam {
     color: #26c4b9;
     font-size: 30px;
-    font-weight: 900;
-    font-family: 'Poppins';
+    font-weight: 800;
 }
 </style>
 """, unsafe_allow_html=True)
 
 # ===============================
-# 5. HEADER & JAM DIGITAL
+# HEADER + JAM
 # ===============================
 c1, c2 = st.columns([10, 3])
 with c2:
     tz = pytz.timezone("Asia/Jakarta")
     now = datetime.datetime.now(tz)
-    st.markdown(
-        f"<div style='text-align:right'><div class='jam-digital'>{now.strftime('%H:%M:%S')}</div></div>",
-        unsafe_allow_html=True
-    )
+    st.markdown(f"<div class='jam'>{now.strftime('%H:%M:%S')}</div>", unsafe_allow_html=True)
 
 st_autorefresh(interval=1000, key="clock")
 
 # ===============================
-# 6. PAGE LOGIC
+# PAGE RENDER
 # ===============================
-if current_page == "dash":
+page = st.session_state.page
+
+# ---------- DASHBOARD ----------
+if page == "dash":
     st.markdown(
         "<h1 style='font-family:Michroma; color:#26c4b9; text-align:center;'>CANE METRIX</h1>",
         unsafe_allow_html=True
@@ -111,22 +106,26 @@ if current_page == "dash":
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.button("📝\nINPUT DATA", on_click=navigasi, args=("input",), key="btn_input")
+        if st.button("📝\nINPUT DATA"):
+            navigasi("input")
 
     with col2:
-        st.button("🧮\nHITUNG ANALISA", on_click=navigasi, args=("analisa",), key="btn_analisa")
+        if st.button("🧮\nHITUNG ANALISA"):
+            navigasi("analisa")
 
     with col3:
-        st.button("📅\nDATABASE", on_click=navigasi, args=("db",), key="btn_db")
+        if st.button("📅\nDATABASE"):
+            navigasi("db")
 
-# ===============================
-elif current_page == "analisa":
+# ---------- ANALISA ----------
+elif page == "analisa":
     st.markdown(
         "<h2 style='font-family:Michroma; color:#26c4b9;'>🧪 ANALISA TETES</h2>",
         unsafe_allow_html=True
     )
 
-    st.button("🔙 KEMBALI KE DASHBOARD", on_click=navigasi, args=("dash",))
+    if st.button("🔙 KEMBALI"):
+        navigasi("dash")
 
     st.write("---")
 
@@ -134,35 +133,30 @@ elif current_page == "analisa":
 
     with col_inp:
         st.subheader("📥 Input Data")
-        brix_obs = st.number_input("Brix Teramati", value=8.80, format="%.2f")
-        suhu_obs = st.number_input("Suhu Teramati (°C)", value=28.3, format="%.1f")
-
-        koreksi = hitung_koreksi(suhu_obs)
+        brix = st.number_input("Brix Teramati", value=8.80, format="%.2f")
+        suhu = st.number_input("Suhu Teramati (°C)", value=28.3, format="%.1f")
+        koreksi = hitung_koreksi(suhu)
         st.info(f"Koreksi Suhu: {koreksi:+.3f}")
 
     with col_res:
-        st.subheader("📊 Hasil Analisa")
-        total_brix = (brix_obs * 10) + koreksi
-
+        total = (brix * 10) + koreksi
+        st.subheader("📊 Hasil")
         st.markdown(f"""
         <div class="hasil-box">
-            <p>Brix × 10 = {brix_obs * 10:.2f}</p>
-            <p style="font-weight:bold;">% BRIX AKHIR</p>
-            <h1 style="font-size:70px; font-family:Michroma;">{total_brix:.3f}</h1>
+            <p>Brix × 10 = {brix*10:.2f}</p>
+            <p><b>% BRIX AKHIR</b></p>
+            <h1 style="font-size:64px;">{total:.3f}</h1>
         </div>
         """, unsafe_allow_html=True)
 
-# ===============================
-elif current_page == "input":
+# ---------- INPUT ----------
+elif page == "input":
     st.markdown("## 📝 INPUT DATA")
-    st.button("🔙 Kembali", on_click=navigasi, args=("dash",))
+    if st.button("🔙 Kembali"):
+        navigasi("dash")
 
-# ===============================
-elif current_page == "db":
+# ---------- DATABASE ----------
+elif page == "db":
     st.markdown("## 📅 DATABASE HARIAN")
-    st.button("🔙 Kembali", on_click=navigasi, args=("dash",))
-
-# ===============================
-else:
-    st.warning("Halaman tidak ditemukan.")
-    st.button("🔙 Dashboard", on_click=navigasi, args=("dash",))
+    if st.button("🔙 Kembali"):
+        navigasi("dash")
