@@ -28,10 +28,9 @@ l_ptpn = get_base64_logo("ptpn.png")
 l_lpp = get_base64_logo("lpp.png")
 l_cane = get_base64_logo("canemetrix.png")
 
-# Link Backup BUMN (Wajib ada)
 url_bumn_backup = "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Logo_BUMN.svg/512px-Logo_BUMN.svg.png"
 
-# --- 3. CSS CUSTOM: FIX PARTNER BOX PANJANG ---
+# --- 3. CSS SAKTI (OVERRIDE TOTAL) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Michroma&family=Poppins:wght@400;700;900&display=swap');
@@ -42,39 +41,44 @@ st.markdown(f"""
         background-size: cover;
     }}
 
-    /* CSS SAKTI: Memaksa Container Streamlit supaya tidak membatasi lebar logo */
+    /* MEMBONGKAR PEMBATAS BAWAAN STREAMLIT */
     [data-testid="column"] {{
-        width: fit-content !important;
-        flex: unset !important;
+        width: auto !important;
         min-width: unset !important;
+        flex: unset !important;
     }}
 
-    /* PARTNER BOX: DIBIKIN PANJANG BANGET */
-    .partner-box-ultra {{ 
+    /* PARTNER BOX: KITA PAKSA LEBAR 650PX (SANGAT PANJANG) */
+    .fixed-partner-box {{ 
         background: white; 
-        padding: 12px 35px; 
+        padding: 10px 40px !important;
         border-radius: 12px; 
         display: flex !important; 
+        flex-direction: row !important;
         align-items: center !important; 
-        gap: 30px !important; 
-        min-width: 500px !important; /* KITA PAKSA MINIMAL 500PX */
-        width: max-content !important;
+        justify-content: flex-start !important;
+        gap: 35px !important; 
+        
+        /* INI KUNCINYA */
+        width: 650px !important; 
+        min-width: 650px !important;
+        max-width: 650px !important;
+        
         box-shadow: 0 8px 20px rgba(0,0,0,0.4);
-        border: 1px solid rgba(255,255,255,0.2);
+        margin-left: -50px; /* Geser sedikit ke kiri biar dapet space lebih */
     }}
     
-    .partner-box-ultra img {{ 
-        height: 32px !important; 
+    .fixed-partner-box img {{ 
+        height: 35px !important; 
         width: auto !important;
+        flex-shrink: 0 !important;
         object-fit: contain !important;
-        flex-shrink: 0 !important; /* Logo dilarang menciut */
     }}
 
     .jam-digital {{
         color: #26c4b9; font-size: 40px; font-weight: 900; 
         font-family: 'Poppins'; line-height: 1.1; 
         text-shadow: 0 0 15px rgba(38, 196, 185, 0.6);
-        text-align: right;
     }}
 
     .glass-card {{
@@ -94,20 +98,20 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 4. HEADER COMPONENT ---
+# --- 4. HEADER ---
 @st.fragment
 def render_header():
-    # Gunakan ratio [5, 2] agar area logo dapet jatah 70% lebar layar
-    h1, h2 = st.columns([5, 2])
+    # Gunakan ratio kolom 10 banding 1 supaya kolom kiri dapet space gila-gilaan
+    h1, h2 = st.columns([10, 3])
     with h1:
         src_kb = f"data:image/png;base64,{l_kb}" if l_kb else url_bumn_backup
         
         html_logos = f'''
-        <div class="partner-box-ultra">
-            <img src="{src_kb}" alt="BUMN">
-            <img src="data:image/png;base64,{l_sgn if l_sgn else ''}" alt="SGN">
-            <img src="data:image/png;base64,{l_ptpn if l_ptpn else ''}" alt="PTPN">
-            <img src="data:image/png;base64,{l_lpp if l_lpp else ''}" alt="LPP">
+        <div class="fixed-partner-box">
+            <img src="{src_kb}">
+            <img src="data:image/png;base64,{l_sgn if l_sgn else ''}">
+            <img src="data:image/png;base64,{l_ptpn if l_ptpn else ''}">
+            <img src="data:image/png;base64,{l_lpp if l_lpp else ''}">
         </div>
         '''
         st.markdown(html_logos, unsafe_allow_html=True)
@@ -116,8 +120,8 @@ def render_header():
         tz = pytz.timezone('Asia/Jakarta')
         now = datetime.datetime.now(tz)
         st.markdown(f'''
-            <div style="text-align:right; margin-top: 10px;">
-                <div style="color:white; opacity:0.8; font-family:Poppins; font-size: 14px;">{now.strftime("%d %B %Y")}</div>
+            <div style="text-align:right;">
+                <div style="color:white; opacity:0.8; font-family:Poppins; font-size:14px;">{now.strftime("%d %B %Y")}</div>
                 <div class="jam-digital">{now.strftime("%H:%M:%S")} <span style="font-size:15px;">WIB</span></div>
             </div>
         ''', unsafe_allow_html=True)
@@ -145,6 +149,7 @@ if st.session_state.page == 'dashboard':
     with c3: 
         if st.button("📅\nDATABASE HARIAN"): pindah_halaman('db_harian')
 
+# Logika Halaman Lainnya (Tetap Sama)
 elif st.session_state.page == 'input_data':
     st.markdown("<h2 style='color:white; font-family:Michroma;'>📝 INPUT DATA</h2>", unsafe_allow_html=True)
     if st.button("🔙 KEMBALI"): pindah_halaman('dashboard')
