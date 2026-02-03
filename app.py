@@ -50,7 +50,7 @@ logo_sgn = get_base64_logo("sgn.png")
 logo_lpp = get_base64_logo("lpp.png")
 logo_cane = get_base64_logo("canemetrix.png")
 
-# --- 2. CSS (TAMPILAN ACC LO) ---
+# --- 2. CSS (FIXED LOGO BOX & STYLING) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Poppins:wght@300;400;700&display=swap');
@@ -59,6 +59,18 @@ st.markdown(f"""
         background: linear-gradient(rgba(0, 10, 30, 0.75), rgba(0, 10, 30, 0.75)), 
         url("https://images.pexels.com/photos/2280571/pexels-photo-2280571.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2");
         background-size: cover; background-position: center; background-attachment: fixed;
+    }}
+
+    /* REVISI: BIKIN KOTAK LOGO LEBIH PANJANG & BERJARAK */
+    .partner-box {{
+        background: white; 
+        padding: 12px 60px; /* Diperlebar ke samping */
+        border-radius: 12px; 
+        display: inline-flex; 
+        align-items: center; 
+        gap: 50px; /* Jarak antar logo ditambah */
+        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        min-width: 450px; /* Lebar minimum kotak putih */
     }}
 
     .hero-container {{
@@ -82,7 +94,6 @@ st.markdown(f"""
         box-shadow: 0 0 25px rgba(38, 196, 185, 0.4); transform: translateY(-5px);
     }}
 
-    /* CSS Fix Tombol: Pastikan menutupi seluruh area card */
     .stButton > button {{
         position: absolute !important; width: 100% !important; height: 180px !important;
         top: 0 !important; left: 0 !important; background: transparent !important;
@@ -93,10 +104,16 @@ st.markdown(f"""
 
 # --- 3. LOGIKA HALAMAN ---
 if st.session_state.page == 'dashboard':
-    # Header partner & Jam
-    c_top1, c_top2 = st.columns([2, 1])
+    # Header partner & Jam (REVISI COLUMN RATIO)
+    c_top1, c_top2 = st.columns([3, 1]) # Kolom kiri lebih besar untuk kotak putih yang panjang
     with c_top1:
-        st.markdown(f'<div style="background:white; padding:8px; border-radius:12px; display:inline-flex; gap:15px;"><img src="data:image/png;base64,{logo_ptpn}" height="35"><img src="data:image/png;base64,{logo_sgn}" height="35"><img src="data:image/png;base64,{logo_lpp}" height="35"></div>', unsafe_allow_html=True)
+        st.markdown(f'''
+            <div class="partner-box">
+                <img src="data:image/png;base64,{logo_ptpn}" height="35">
+                <img src="data:image/png;base64,{logo_sgn}" height="35">
+                <img src="data:image/png;base64,{logo_lpp}" height="35">
+            </div>
+        ''', unsafe_allow_html=True)
     with c_top2:
         st.markdown(f'<div style="text-align: right; color: white;">{tgl_skrg}<br><b style="color:#26c4b9; font-size:20px;">{jam_skrg} WIB</b></div>', unsafe_allow_html=True)
 
@@ -111,25 +128,20 @@ if st.session_state.page == 'dashboard':
         </div>
     ''', unsafe_allow_html=True)
 
-    # GRID MENU (DIBUAT MANUAL BIAR SENSOR KLIK GAK ERROR)
+    # GRID MENU
     col1, col2, col3 = st.columns(3)
-    
     with col1:
         st.markdown('<div class="menu-card-container"><div style="font-size:50px;">📝</div><div style="color:white; font-weight:700;">INPUT DATA</div></div>', unsafe_allow_html=True)
         st.button("", key="btn_input")
-        
     with col2:
         st.markdown('<div class="menu-card-container"><div style="font-size:50px;">🧮</div><div style="color:white; font-weight:700;">HITUNG ANALISA</div></div>', unsafe_allow_html=True)
-        # INI TOMBOLNYA BEB!
         if st.button("", key="btn_hitung"):
             st.session_state.page = 'analisa_tetes'
             st.rerun()
-
     with col3:
         st.markdown('<div class="menu-card-container"><div style="font-size:50px;">📅</div><div style="color:white; font-weight:700;">DATABASE HARIAN</div></div>', unsafe_allow_html=True)
         st.button("", key="btn_harian")
 
-    # Baris 2
     col4, col5, col6 = st.columns(3)
     with col4:
         st.markdown('<div class="menu-card-container"><div style="font-size:50px;">📊</div><div style="color:white; font-weight:700;">DATABASE BULANAN</div></div>', unsafe_allow_html=True)
@@ -143,25 +155,6 @@ if st.session_state.page == 'dashboard':
 
 elif st.session_state.page == 'analisa_tetes':
     st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>🧪 PERHITUNGAN ANALISA TETES</h2>", unsafe_allow_html=True)
-    
     with st.container():
         st.markdown('<div class="hero-container" style="display:block; text-align:center;">', unsafe_allow_html=True)
-        c1, c2 = st.columns(2)
-        with c1:
-            bx_obs = st.number_input("Brix Teramati", value=8.80, format="%.2f")
-            suhu_obs = st.number_input("Suhu Teramati (°C)", value=28.3, format="%.1f")
-            koreksi = hitung_interpolasi(suhu_obs)
-            st.success(f"Koreksi: {koreksi:+.3f}")
-        with c2:
-            bx_akhir = (bx_obs * 10) + koreksi
-            st.markdown(f"""
-                <div style="background: rgba(38, 196, 185, 0.2); padding: 20px; border-radius: 20px; border: 2px solid #26c4b9;">
-                    <h4 style="color:white;">% BRIX AKHIR</h4>
-                    <h1 style="color:#26c4b9; font-size:60px; font-family:Orbitron;">{bx_akhir:.3f}</h1>
-                </div>
-            """, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    if st.button("🔙 KEMBALI"):
-        st.session_state.page = 'dashboard'
-        st.rerun()
+        c1, c2 = st
