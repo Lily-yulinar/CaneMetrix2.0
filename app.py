@@ -6,14 +6,18 @@ import base64
 import os
 import numpy as np
 
-# --- 1. CONFIG & STATE ---
+# --- 1. SETTING PAGE ---
 st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
 
+# Inisialisasi Session State agar halaman tidak reset
 if 'page' not in st.session_state:
     st.session_state.page = 'dashboard'
 
-# --- 2. DATA KOREKSI SUHU (LENGKAP DARI FOTO LO) ---
-# Gue masukin manual sesuai gambar tabel yang lo kirim
+# FUNGSI CALLBACK: Ini rahasia biar tombolnya "sadar" pas diklik
+def set_page(name):
+    st.session_state.page = name
+
+# --- 2. DATA KOREKSI SUHU (Interpolasi dari Foto Lo) ---
 data_koreksi = {
     25: -0.19, 26: -0.12, 27: -0.05, 28: 0.02, 29: 0.09,
     30: 0.16, 31: 0.24, 32: 0.31, 33: 0.38, 34: 0.46,
@@ -22,79 +26,71 @@ data_koreksi = {
     45: 1.34, 46: 1.42, 47: 1.50, 48: 1.58, 49: 1.66, 50: 1.72
 }
 
-def hitung_koreksi(suhu_input):
-    s_list = sorted(data_koreksi.keys())
-    k_list = [data_koreksi[s] for s in s_list]
-    return float(np.interp(suhu_input, s_list, k_list))
+def get_koreksi(temp):
+    s_keys = sorted(data_koreksi.keys())
+    s_vals = [data_koreksi[k] for k in s_keys]
+    return float(np.interp(temp, s_keys, s_vals))
 
-# --- 3. CSS (LOGOS & GLASS UI) ---
+# --- 3. CSS CUSTOM (UI & Button Style) ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Michroma&family=Poppins:wght@400;700;900&display=swap');
-    .stApp { background: #000a1e; }
     
-    .logo-container {
-        background: white; padding: 10px 30px; border-radius: 12px;
-        display: flex; align-items: center; gap: 20px; width: fit-content;
+    .stApp {
+        background: linear-gradient(rgba(0, 10, 30, 0.85), rgba(0, 10, 30, 0.85)), 
+        url("https://images.pexels.com/photos/2280571/pexels-photo-2280571.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2");
+        background-size: cover;
     }
-    .logo-container img { height: 35px; width: auto; }
-    
-    .jam-box { text-align: right; color: white; font-family: 'Poppins'; }
-    .jam-digital { color: #26c4b9; font-size: 32px; font-weight: 900; }
-    
+
     .glass-card {
         background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px);
-        padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
+        padding: 30px; border-radius: 25px; border: 1px solid rgba(255, 255, 255, 0.1);
+        margin-bottom: 20px;
+    }
+
+    /* Styling Tombol agar lebih responsif */
+    div.stButton > button {
+        background: rgba(255, 255, 255, 0.07) !important;
+        color: white !important; border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 20px !important; height: 160px !important; width: 100% !important;
+        font-size: 18px !important; font-weight: 700 !important;
     }
     
-    /* STYLE BUTTON AGAR BISA DI-KLIK JELAS */
-    div.stButton > button {
-        background: rgba(255, 255, 255, 0.1) !important;
-        color: white !important; border: 1px solid rgba(255,255,255,0.2) !important;
-        border-radius: 20px !important; height: 150px !important; width: 100% !important;
-        font-size: 18px !important; font-weight: 700 !important; transition: 0.3s;
+    div.stButton > button:active {
+        transform: scale(0.98);
+        border-color: #26c4b9 !important;
     }
-    div.stButton > button:hover { border-color: #26c4b9 !important; background: rgba(38,196,185,0.2) !important; }
+
+    .jam-digital {
+        color: #26c4b9; font-size: 35px; font-weight: 900;
+        font-family: 'Poppins'; text-shadow: 0 0 15px rgba(38, 196, 185, 0.6);
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 4. HEADER ---
-c_head1, c_head2 = st.columns([10, 3])
-with c_head1:
-    # Logo Box (Gue pakai placeholder kalau file ga ada biar ga error)
-    st.markdown('<div class="logo-container"><b>PARTNER LOGOS HERE</b></div>', unsafe_allow_html=True)
-
-with c_head2:
+# --- 4. HEADER (Waktu Otomatis) ---
+c_h1, c_h2 = st.columns([10, 3])
+with c_h2:
     tz = pytz.timezone('Asia/Jakarta')
     now = datetime.datetime.now(tz)
-    st.markdown(f'''
-        <div class="jam-box">
-            <div style="opacity:0.7;">{now.strftime("%d %B %Y")}</div>
-            <div class="jam-digital">{now.strftime("%H:%M:%S")} WIB</div>
-        </div>''', unsafe_allow_html=True)
+    st.markdown(f'<div style="text-align:right;"><div class="jam-digital">{now.strftime("%H:%M:%S")}</div></div>', unsafe_allow_html=True)
 
-st_autorefresh(interval=1000, key="timer")
+st_autorefresh(interval=1000, key="refresh_clock")
 
-# --- 5. LOGIKA NAVIGASI ---
+# --- 5. NAVIGASI UTAMA ---
 
 if st.session_state.page == 'dashboard':
-    st.markdown('<div class="glass-card" style="margin-top:20px;">'
-                '<h1 style="font-family:Michroma; color:white; letter-spacing:5px;">CANE METRIX</h1>'
+    st.markdown('<div class="glass-card"><h1 style="font-family:Michroma; color:white; letter-spacing:5px;">CANE METRIX</h1>'
                 '<p style="color:#26c4b9; font-weight:700;">ACCELERATING QA PERFORMANCE</p></div>', unsafe_allow_html=True)
     
-    m1, m2, m3 = st.columns(3)
-    with m1:
-        if st.button("📝\nINPUT DATA", key="m1"):
-            st.session_state.page = 'input'
-            st.rerun()
-    with m2:
-        if st.button("🧮\nHITUNG ANALISA", key="m2"):
-            st.session_state.page = 'analisa'
-            st.rerun()
-    with m3:
-        if st.button("📅\nDATABASE HARIAN", key="m3"):
-            st.session_state.page = 'db'
-            st.rerun()
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.button("📝\nINPUT DATA", on_click=set_page, args=('input',), key='btn_in')
+    with col2:
+        # Tombol Hitung Analisa dengan Callback
+        st.button("🧮\nHITUNG ANALISA", on_click=set_page, args=('analisa',), key='btn_an')
+    with col3:
+        st.button("📅\nDATABASE HARIAN", on_click=set_page, args=('db',), key='btn_db')
 
 elif st.session_state.page == 'analisa':
     st.markdown("<h2 style='color:white; font-family:Michroma;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
@@ -102,32 +98,38 @@ elif st.session_state.page == 'analisa':
     with st.container():
         st.markdown('<div class="glass-card">', unsafe_allow_html=True)
         L, R = st.columns(2)
+        
         with L:
-            st.write("### Input Data")
-            b_obs = st.number_input("Brix Teramati", value=8.5, step=0.01, format="%.2f")
-            b_pengenceran = b_obs * 10
-            st.info(f"Brix Pengenceran (x10): {b_pengenceran:.2f}")
-            suhu = st.number_input("Suhu (°C)", min_value=25.0, max_value=50.0, value=28.0)
+            st.write("### Input Lab")
+            b_teramati = st.number_input("Brix Teramati", value=8.50, step=0.01, format="%.2f")
+            
+            # Auto-pengenceran x10
+            b_pengenceran = b_teramati * 10
+            st.success(f"Brix Pengenceran (x10): **{b_pengenceran:.2f}**")
+            
+            suhu = st.number_input("Suhu (°C)", min_value=25.0, max_value=50.0, value=28.0, step=0.1)
             
         with R:
             st.write("### Hasil")
-            koreksi = hitung_koreksi(suhu)
-            b_akhir = b_pengenceran + koreksi
+            # Hitung Koreksi & Brix Akhir
+            koreksi_nilai = get_koreksi(suhu)
+            brix_persen = b_pengenceran + koreksi_nilai
+            
             st.markdown(f"""
-                <div style="background:rgba(38,196,185,0.2); padding:30px; border-radius:20px; border:2px solid #26c4b9; text-align:center;">
-                    <small style="color:white;">% BRIX AKHIR</small>
-                    <h1 style="color:white; font-size:70px; margin:0;">{b_akhir:.2f}</h1>
-                    <p style="color:#26c4b9; margin:0;">Koreksi Suhu: {koreksi:+.2f}</p>
-                </div>""", unsafe_allow_html=True)
+                <div style="background: rgba(38, 196, 185, 0.1); padding: 30px; border-radius: 20px; border: 2px solid #26c4b9; text-align: center;">
+                    <p style="color: white; opacity: 0.8; margin: 0;">% BRIX AKHIR</p>
+                    <h1 style="color: white; font-size: 80px; margin: 0;">{brix_persen:.2f}</h1>
+                    <p style="color: #26c4b9; font-weight: bold; margin: 0;">Koreksi Suhu: {koreksi_nilai:+.2f}</p>
+                </div>
+            """, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
+    
+    st.button("🔙 KEMBALI", on_click=set_page, args=('dashboard',), key='back_an')
 
-    if st.button("🔙 KEMBALI"):
-        st.session_state.page = 'dashboard'
-        st.rerun()
+elif st.session_state.page == 'input':
+    st.write("Halaman Input Data")
+    st.button("🔙 KEMBALI", on_click=set_page, args=('dashboard',), key='back_in')
 
-# Halaman lain (Placeholder biar ga error)
-elif st.session_state.page in ['input', 'db']:
-    st.write("Halaman sedang dikembangkan")
-    if st.button("🔙 KEMBALI"):
-        st.session_state.page = 'dashboard'
-        st.rerun()
+elif st.session_state.page == 'db':
+    st.write("Halaman Database")
+    st.button("🔙 KEMBALI", on_click=set_page, args=('dashboard',), key='back_db_page')
