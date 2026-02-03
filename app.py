@@ -8,19 +8,17 @@ import os
 # --- 1. SETTING PAGE & STATE ---
 st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
 
-# Inisialisasi State Halaman
 if 'page' not in st.session_state:
     st.session_state.page = 'dashboard'
 
-# Fungsi Navigasi Solid
 def pindah_halaman(nama_halaman):
     st.session_state.page = nama_halaman
     st.rerun()
 
-# Autorefresh tiap 2 detik biar jam update
+# Refresh 2 detik biar jam update
 st_autorefresh(interval=2000, key="datarefresh")
 
-# Waktu & Jam
+# Waktu
 tz = pytz.timezone('Asia/Jakarta')
 now = datetime.datetime.now(tz)
 tgl_skrg = now.strftime("%d %B %Y")
@@ -49,9 +47,9 @@ def get_base64_logo(file_name):
     if os.path.exists(file_name):
         with open(file_name, "rb") as f:
             return base64.b64encode(f.read()).decode()
-    return ""
+    return None # Balikin None kalau file ga ada
 
-# LOAD SEMUA LOGO
+# LOAD SEMUA LOGO (Pastiin nama file beneran 'kb.png', 'sgn.png', dll)
 logo_kb = get_base64_logo("kb.png")
 logo_sgn = get_base64_logo("sgn.png")
 logo_lpp = get_base64_logo("lpp.png")
@@ -69,11 +67,11 @@ st.markdown(f"""
         background-size: cover;
     }}
 
-    /* KOTAK LOGO PANJANG URUTAN: KB, SGN, LPP, PTPN */
+    /* KOTAK LOGO LEBIH PANJANG UNTUK 4 LOGO */
     .partner-box {{ 
-        background: white; padding: 12px 40px; border-radius: 12px; 
-        display: inline-flex; align-items: center; gap: 30px; min-width: 580px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        background: white; padding: 15px 40px; border-radius: 15px; 
+        display: inline-flex; align-items: center; gap: 30px; 
+        min-width: 600px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }}
 
     .jam-digital {{
@@ -81,15 +79,15 @@ st.markdown(f"""
         font-family: 'Poppins'; line-height: 1; text-shadow: 0 0 20px rgba(38, 196, 185, 0.8);
     }}
 
+    /* TOMBOL MENU CARD */
     div.stButton > button {{
         background: rgba(255, 255, 255, 0.07) !important;
         color: white !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 20px !important;
         height: 180px !important; width: 100% !important;
-        font-size: 22px !important; font-weight: 700 !important;
+        font-size: 20px !important; font-weight: 700 !important;
         display: flex !important; flex-direction: column !important;
-        transition: 0.3s;
     }}
 
     div.stButton > button:hover {{
@@ -106,19 +104,25 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. HEADER (URUTAN LOGO: KB, SGN, LPP, PTPN) ---
+# --- 3. HEADER (URUTAN: KB, SGN, LPP, PTPN) ---
 h1, h2 = st.columns([3, 1])
 with h1:
-    st.markdown(f'''<div class="partner-box">
-        <img src="data:image/png;base64,{logo_kb}" height="35">
-        <img src="data:image/png;base64,{logo_sgn}" height="35">
-        <img src="data:image/png;base64,{logo_lpp}" height="35">
-        <img src="data:image/png;base64,{logo_ptpn}" height="35">
-    </div>''', unsafe_allow_html=True)
+    # Buat string HTML untuk logo yang ada saja
+    html_logos = ""
+    for l_data in [logo_kb, logo_sgn, logo_lpp, logo_ptpn]:
+        if l_data:
+            html_logos += f'<img src="data:image/png;base64,{l_data}" height="35">'
+    
+    st.markdown(f'''<div class="partner-box">{html_logos}</div>''', unsafe_allow_html=True)
+    
+    # Alert kalau KB belum ada (Bisa dihapus kalau udah ok)
+    if not logo_kb:
+        st.warning("⚠️ File 'kb.png' belum terdeteksi di folder!")
+
 with h2:
     st.markdown(f'<div style="text-align:right;"><div style="color:white; opacity:0.8; font-family:Poppins;">{tgl_skrg}</div><div class="jam-digital">{jam_skrg}</div></div>', unsafe_allow_html=True)
 
-# --- 4. NAVIGATION LOGIC ---
+# --- 4. NAVIGATION ---
 if st.session_state.page == 'dashboard':
     st.markdown(f'''
     <div class="hero-box" style="display:flex; justify-content:space-between; align-items:center;">
@@ -136,12 +140,10 @@ if st.session_state.page == 'dashboard':
     with c3: st.button("📅\nDATABASE HARIAN", on_click=pindah_halaman, args=('db_harian',), key="m3")
 
 elif st.session_state.page == 'analisa_tetes':
-    st.markdown("<h2 style='text-align:center; color:white; font-family:Michroma; margin-top:20px; letter-spacing:5px;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
-    
+    st.markdown("<h2 style='text-align:center; color:white; font-family:Michroma; margin-top:20px;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
     st.markdown('<div class="hero-box">', unsafe_allow_html=True)
     k1, k2 = st.columns(2)
     with k1:
-        st.markdown("<h3 style='color:#26c4b9; font-family:Poppins;'>Input Parameter</h3>", unsafe_allow_html=True)
         bx = st.number_input("Brix Teramati", value=8.80, format="%.2f")
         sh = st.number_input("Suhu Teramati (°C)", value=28.3, format="%.1f")
         kor = hitung_interpolasi(sh)
@@ -149,11 +151,9 @@ elif st.session_state.page == 'analisa_tetes':
         hasil = (bx * 10) + kor
         st.markdown(f'''
             <div style="background:rgba(38,196,185,0.2); padding:40px; border-radius:25px; border:2px solid #26c4b9; text-align:center;">
-                <h4 style="color:white; margin:0; font-family:Poppins;">HASIL % BRIX AKHIR</h4>
-                <h1 style="color:#26c4b9; font-size:75px; font-family:Michroma; margin:15px 0;">{hasil:.3f}</h1>
-                <p style="color:white; font-family:Poppins;">Faktor Koreksi Suhu: <b>{kor:+.3f}</b></p>
+                <h1 style="color:#26c4b9; font-size:75px; font-family:Michroma; margin:0;">{hasil:.3f}</h1>
+                <p style="color:white;">Koreksi: {kor:+.3f}</p>
             </div>
         ''', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
-    
-    st.button("🔙 KEMBALI KE DASHBOARD", on_click=pindah_halaman, args=('dashboard',), key="back_btn")
+    st.button("🔙 KEMBALI", on_click=pindah_halaman, args=('dashboard',), key="back")
