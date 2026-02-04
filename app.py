@@ -43,7 +43,7 @@ def hitung_interpolasi(suhu_user):
             return y0 + (suhu_user - x0) * (y1 - y0) / (x1 - x0)
     return 0.0
 
-# --- 3. CSS MODERN (FIXED NAVIGATION) ---
+# --- 3. CSS (SIMPLER & STRONGER) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Poppins:wght@300;400;700&display=swap');
@@ -66,37 +66,38 @@ st.markdown(f"""
         padding: 40px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;
     }}
 
-    /* Container untuk Menu */
-    .menu-wrapper {{ position: relative; height: 180px; width: 100%; }}
-    
-    .menu-card {{
-        position: absolute; top:0; left:0; right:0; bottom:0;
-        background: rgba(255, 255, 255, 0.07); backdrop-filter: blur(10px);
-        border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1);
-        display: flex; flex-direction: column; justify-content: center; align-items: center;
-        transition: 0.3s; z-index: 1; pointer-events: none; /* Supaya klik tembus ke tombol */
-    }}
-
-    /* CSS agar tombol Streamlit transparan menutupi seluruh area wrapper */
-    .stButton > button {{
-        width: 100% !important;
+    /* Styling tombol asli Streamlit agar terlihat seperti card */
+    div.stButton > button {{
+        background: rgba(255, 255, 255, 0.07) !important;
+        backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 20px !important;
+        color: white !important;
         height: 180px !important;
-        background-color: transparent !important;
-        color: transparent !important;
-        border: none !important;
-        box-shadow: none !important;
-        position: relative;
-        z-index: 5; /* Di atas card */
+        width: 100% !important;
+        transition: 0.3s !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
     }}
 
-    .menu-wrapper:hover .menu-card {{
-        background: rgba(38, 196, 185, 0.2); border-color: #26c4b9;
-        transform: translateY(-8px); box-shadow: 0 0 25px rgba(38, 196, 185, 0.4);
+    div.stButton > button:hover {{
+        background: rgba(38, 196, 185, 0.2) !important;
+        border-color: #26c4b9 !important;
+        box-shadow: 0 0 25px rgba(38, 196, 185, 0.4) !important;
+        transform: translateY(-8px) !important;
+    }}
+    
+    /* Menghilangkan border fokus tombol */
+    div.stButton > button:focus {{
+        box-shadow: 0 0 25px rgba(38, 196, 185, 0.4) !important;
+        border-color: #26c4b9 !important;
     }}
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. FRAGMENT UNTUK JAM ---
+# --- 4. FRAGMENT JAM ---
 @st.fragment(run_every="1s")
 def jam_realtime():
     tz = pytz.timezone('Asia/Jakarta')
@@ -110,9 +111,10 @@ def jam_realtime():
         </div>
     """, unsafe_allow_html=True)
 
-# --- 5. LOGIKA NAVIGASI ---
+# --- 5. LOGIKA HALAMAN ---
 
 if st.session_state.page == 'dashboard':
+    # Top Bar
     c1, c2 = st.columns([2, 1])
     with c1:
         st.markdown(f'''<div class="header-logo-box">
@@ -122,34 +124,34 @@ if st.session_state.page == 'dashboard':
     with c2:
         jam_realtime()
 
+    # Hero
     st.markdown(f'''<div class="hero-container">
         <div>
             <h1 style="font-family:Orbitron; color:white; font-size:55px; margin:0;">CANE METRIX</h1>
             <p style="color:#26c4b9; font-family:Poppins; font-weight:700; letter-spacing:5px;">ACCELERATING QA PERFORMANCE</p>
         </div>
-        <img src="data:image/png;base64,{logo_cane}" style="height:180px; filter:drop-shadow(0 0 15px #26c4b9);">
+        <img src="data:image/png;base64,{logo_cane}" style="height:150px; filter:drop-shadow(0 0 15px #26c4b9);">
     </div>''', unsafe_allow_html=True)
 
+    # Grid Menu - PAKAI TOMBOL ASLI TANPA OVERLAY RUMIT
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.markdown('<div class="menu-wrapper"><div class="menu-card"><div style="font-size:50px;">📝</div><div style="color:white; font-weight:700;">INPUT DATA</div></div>', unsafe_allow_html=True)
-        if st.button("Input Data", key="btn_input"):
+        # Kita taruh icon di atas tombol menggunakan markdown sederhana
+        st.markdown("<div style='text-align:center; margin-bottom:-50px; position:relative; z-index:10; pointer-events:none;'><h1>📝</h1></div>", unsafe_allow_html=True)
+        if st.button("INPUT DATA", key="btn_input", use_container_width=True):
             st.toast("Fitur Input Data segera hadir!")
-        st.markdown('</div>', unsafe_allow_html=True)
         
     with col2:
-        st.markdown('<div class="menu-wrapper"><div class="menu-card"><div style="font-size:50px;">🧮</div><div style="color:white; font-weight:700;">HITUNG ANALISA</div></div>', unsafe_allow_html=True)
-        if st.button("Hitung Analisa", key="btn_hitung"):
+        st.markdown("<div style='text-align:center; margin-bottom:-50px; position:relative; z-index:10; pointer-events:none;'><h1>🧮</h1></div>", unsafe_allow_html=True)
+        if st.button("HITUNG ANALISA", key="btn_hitung", use_container_width=True):
             st.session_state.page = 'analisa_tetes'
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
 
     with col3:
-        st.markdown('<div class="menu-wrapper"><div class="menu-card"><div style="font-size:50px;">📅</div><div style="color:white; font-weight:700;">DATABASE HARIAN</div></div>', unsafe_allow_html=True)
-        if st.button("Database", key="btn_harian"):
+        st.markdown("<div style='text-align:center; margin-bottom:-50px; position:relative; z-index:10; pointer-events:none;'><h1>📅</h1></div>", unsafe_allow_html=True)
+        if st.button("DATABASE HARIAN", key="btn_harian", use_container_width=True):
             st.toast("Fitur Database segera hadir!")
-        st.markdown('</div>', unsafe_allow_html=True)
 
 elif st.session_state.page == 'analisa_tetes':
     st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
