@@ -9,7 +9,7 @@ from google.oauth2.service_account import Credentials
 # --- 1. CONFIG & STATE ---
 st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
 
-# FUNGSI KONEKSI EXCEL (Tambahan untuk fix error PEM & Excel)
+# FUNGSI KONEKSI EXCEL (Fix PEM & Fix Scope 403)
 def init_connection():
     try:
         s = st.secrets["gcp_service_account"]
@@ -22,7 +22,12 @@ def init_connection():
             "auth_provider_x509_cert_url": s["auth_provider_x509_cert_url"],
             "client_x509_cert_url": s["client_x509_cert_url"]
         }
-        creds = Credentials.from_service_account_info(info, scopes=["https://www.googleapis.com/auth/spreadsheets"])
+        # Scopes lengkap agar bisa edit file
+        scopes = [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive"
+        ]
+        creds = Credentials.from_service_account_info(info, scopes=scopes)
         return gspread.authorize(creds)
     except Exception as e:
         return None
@@ -32,7 +37,7 @@ if 'page' not in st.session_state:
 if 'analisa_type' not in st.session_state:
     st.session_state.analisa_type = None
 
-# --- 2. FUNGSI LOGO & ASSETS (KODE ASLI LO) ---
+# --- 2. FUNGSI LOGO & ASSETS ---
 def get_base64_logo(file_name):
     if os.path.exists(file_name):
         with open(file_name, "rb") as f:
@@ -45,7 +50,7 @@ logo_lpp = get_base64_logo("lpp.png")
 logo_kb = get_base64_logo("kb.png")
 logo_cane = get_base64_logo("canemetrix.png")
 
-# --- 3. DATABASE TABEL (KODE ASLI LO) ---
+# --- 3. DATABASE TABEL ---
 data_koreksi = {27: -0.05, 28: 0.02, 29: 0.09, 30: 0.16, 31: 0.24, 32: 0.315, 33: 0.385, 34: 0.465, 35: 0.54, 36: 0.62, 37: 0.70, 38: 0.78, 39: 0.86, 40: 0.94}
 data_bj = {0.0: 0.99640, 5.0: 1.01592, 10.0: 1.03608, 15.0: 1.05691, 20.0: 1.07844, 25.0: 1.10069, 30.0: 1.12368, 35.0: 1.14745, 40.0: 1.17203, 45.0: 1.19746, 49.0: 1.21839, 49.4: 1.22051, 49.5: 1.22104, 50.0: 1.22372, 55.0: 1.25083, 60.0: 1.27885, 65.0: 1.30781, 70.0: 1.33775}
 data_tsai = {15.0: 336.00, 16.0: 316.00, 17.0: 298.00, 18.0: 282.00, 19.0: 267.00, 20.0: 254.50, 21.0: 242.90, 22.0: 231.80, 22.5: 223.60, 23.0: 222.20, 24.0: 213.30, 25.0: 204.80, 26.0: 197.40, 27.0: 190.40, 28.0: 183.70, 29.0: 177.60, 30.0: 171.70, 31.0: 166.30, 32.0: 161.20, 33.0: 156.60, 34.0: 152.20, 35.0: 147.90, 36.0: 143.90, 37.0: 140.20, 37.7: 136.67}
@@ -62,7 +67,7 @@ def hitung_interpolasi(nilai_user, dataset):
             return y0 + (nilai_user - x0) * (y1 - y0) / (x1 - x0)
     return 1.0
 
-# --- 4. CSS (KODE ASLI LO) ---
+# --- 4. CSS ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Poppins:wght@300;400;700&display=swap');
@@ -76,7 +81,7 @@ st.markdown(f"""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 5. JAM REALTIME (KODE ASLI LO) ---
+# --- 5. JAM REALTIME ---
 @st.fragment(run_every="1s")
 def jam_realtime():
     tz = pytz.timezone('Asia/Jakarta')
@@ -127,7 +132,10 @@ elif st.session_state.page == 'pilih_analisa':
         st.session_state.page = 'dashboard'; st.rerun()
 
 elif st.session_state.page == 'analisa_lab':
-    # --- ANALISA TETES (YANG DIUBAH CUMA DISINI BEB) ---
+    # List jam 24 jam untuk semua menu
+    list_jam = [f"{(i % 24):02d}:00" for i in range(6, 30)]
+
+    # --- ANALISA TETES ---
     if st.session_state.analisa_type == 'tetes':
         st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
         with st.container():
@@ -137,9 +145,6 @@ elif st.session_state.page == 'analisa_lab':
                 bx_in = st.number_input("Brix Teramati", value=8.80, format="%.2f")
                 sh_in = st.number_input("Suhu (°C)", value=28.0, format="%.1f")
                 pol_baca = st.number_input("Pol Baca", value=11.00, format="%.2f")
-                
-                # FIX JAM: 06:00 sampai 05:00
-                list_jam = [f"{(i % 24):02d}:00" for i in range(6, 30)]
                 analisa_jam = st.selectbox("Analisa Jam", options=list_jam)
                 
                 kor = hitung_interpolasi(sh_in, data_koreksi); bj = hitung_interpolasi(bx_in, data_bj)
@@ -147,28 +152,23 @@ elif st.session_state.page == 'analisa_lab':
                 hk = (pol_akhir / brix_akhir * 100) if brix_akhir != 0 else 0
                 st.info(f"💡 Koreksi: {kor:+.3f} | BJ: {bj:.6f}")
                 
-                # TOMBOL SIMPAN
-                if st.button("🚀 SIMPAN KE EXCEL", use_container_width=True):
+                if st.button("🚀 SIMPAN KE EXCEL", key="btn_tetes", use_container_width=True):
                     client = init_connection()
                     if client:
                         try:
                             sh = client.open("KKKB_250711.xlsx")
                             worksheet = sh.worksheet("INPUT")
                             tanggal = datetime.datetime.now(pytz.timezone('Asia/Jakarta')).strftime("%Y-%m-%d")
-                            worksheet.append_row([tanggal, analisa_jam, brix_akhir, pol_akhir, hk])
+                            worksheet.append_row([tanggal, analisa_jam, "Tetes", brix_akhir, pol_akhir, hk])
                             st.success(f"Data jam {analisa_jam} Berhasil Disimpan! ✅")
-                        except Exception as e:
-                            st.error(f"Gagal Simpan: {e}")
-                    else:
-                        st.error("Koneksi Google Sheets Gagal. Cek Secrets lo!")
-
+                        except Exception as e: st.error(f"Gagal Simpan: {e}")
             with cy:
                 st.markdown(f'<div class="card-result"><h1 style="color:#26c4b9; font-family:Orbitron; margin:0;">{brix_akhir:.3f}</h1><p style="color:white;">% BRIX AKHIR</p></div>', unsafe_allow_html=True)
                 st.markdown(f'<div class="card-result" style="border-color:#ffcc00;"><h1 style="color:#ffcc00; font-family:Orbitron; margin:0;">{pol_akhir:.3f}</h1><p style="color:white;">% POL AKHIR</p></div>', unsafe_allow_html=True)
                 st.markdown(f'<div class="card-result" style="border-color:#ff4b4b;"><h1 style="color:#ff4b4b; font-family:Orbitron; margin:0;">{hk:.2f}</h1><p style="color:white;">HK</p></div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- OD TETES, TSAI, ICUMSA (KODE ASLI LO) ---
+    # --- OD TETES ---
     elif st.session_state.analisa_type == 'od':
         st.markdown("<h2 style='text-align:center; color:#ff4b4b; font-family:Orbitron;'>🔬 OPTICAL DENSITY TETES</h2>", unsafe_allow_html=True)
         with st.container():
@@ -177,12 +177,24 @@ elif st.session_state.page == 'analisa_lab':
             with cx:
                 bx_od = st.number_input("Brix Teramati (cari BJ)", value=8.80, format="%.2f")
                 abs_val = st.number_input("Nilai Absorbansi (Abs)", value=0.418, format="%.3f")
+                analisa_jam = st.selectbox("Analisa Jam", options=list_jam)
                 bj_od = hitung_interpolasi(bx_od, data_bj); od_res = (abs_val * bj_od * 500) / 1
                 st.info(f"🔍 BJ d27,5: {bj_od:.6f}")
+                
+                if st.button("🚀 SIMPAN KE EXCEL", key="btn_od", use_container_width=True):
+                    client = init_connection()
+                    if client:
+                        try:
+                            sh = client.open("KKKB_250711.xlsx"); worksheet = sh.worksheet("INPUT")
+                            tanggal = datetime.datetime.now(pytz.timezone('Asia/Jakarta')).strftime("%Y-%m-%d")
+                            worksheet.append_row([tanggal, analisa_jam, "OD Tetes", bx_od, abs_val, od_res])
+                            st.success(f"Data OD jam {analisa_jam} Berhasil Disimpan! ✅")
+                        except Exception as e: st.error(f"Gagal: {e}")
             with cy:
                 st.markdown(f'<div class="card-result" style="border-color:#ff4b4b; background:rgba(255,75,75,0.1); padding:50px;"><h1 style="color:#ff4b4b; font-size:60px; font-family:Orbitron; margin:0;">{od_res:.3f}</h1><p style="color:white;">OD TETES</p></div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
+    # --- ANALISA TSAI TETES ---
     elif st.session_state.analisa_type == 'tsai':
         st.markdown("<h2 style='text-align:center; color:#ffcc00; font-family:Orbitron;'>⚗️ ANALISA TSAI TETES</h2>", unsafe_allow_html=True)
         with st.container():
@@ -191,13 +203,25 @@ elif st.session_state.page == 'analisa_lab':
             with cx:
                 vol_titran = st.number_input("Volume Titran (ml)", value=22.5, format="%.1f")
                 f_fehling = st.number_input("Faktor Fehling", value=0.979, format="%.3f")
+                analisa_jam = st.selectbox("Analisa Jam", options=list_jam)
                 hasil_kali = vol_titran * f_fehling
                 konversi_tabel = hitung_interpolasi(hasil_kali, data_tsai); tsai_final = konversi_tabel / 4
                 st.warning(f"Hasil Titran x Faktor: {hasil_kali:.3f}"); st.info(f"Koreksi Tabel: {konversi_tabel:.2f}")
+
+                if st.button("🚀 SIMPAN KE EXCEL", key="btn_tsai", use_container_width=True):
+                    client = init_connection()
+                    if client:
+                        try:
+                            sh = client.open("KKKB_250711.xlsx"); worksheet = sh.worksheet("INPUT")
+                            tanggal = datetime.datetime.now(pytz.timezone('Asia/Jakarta')).strftime("%Y-%m-%d")
+                            worksheet.append_row([tanggal, analisa_jam, "TSAI", vol_titran, f_fehling, tsai_final])
+                            st.success(f"Data TSAI jam {analisa_jam} Berhasil Disimpan! ✅")
+                        except Exception as e: st.error(f"Gagal: {e}")
             with cy:
                 st.markdown(f'<div class="card-result" style="border-color:#ffcc00; background:rgba(255,204,0,0.1); padding:50px;"><h1 style="color:#ffcc00; font-size:60px; font-family:Orbitron; margin:0;">{tsai_final:.3f}</h1><p style="color:white;">% TSAI TETES</p></div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
+    # --- ANALISA ICUMSA GULA ---
     elif st.session_state.analisa_type == 'icumsa':
         st.markdown("<h2 style='text-align:center; color:#00d4ff; font-family:Orbitron;'>💎 ANALISA ICUMSA GULA</h2>", unsafe_allow_html=True)
         with st.container():
@@ -206,9 +230,20 @@ elif st.session_state.page == 'analisa_lab':
             with cx:
                 abs_icumsa = st.number_input("Absorbansi (Abs)", value=0.149, format="%.3f")
                 brix_icumsa = st.number_input("% Brix Gula", value=49.44, format="%.2f")
+                analisa_jam = st.selectbox("Analisa Jam", options=list_jam)
                 bj_icumsa = hitung_interpolasi(brix_icumsa, data_bj)
                 icumsa_res = (abs_icumsa * 100000) / (brix_icumsa * 1 * bj_icumsa) if brix_icumsa > 0 else 0
                 st.info(f"🔍 BJ Terdeteksi: {bj_icumsa:.5f}")
+
+                if st.button("🚀 SIMPAN KE EXCEL", key="btn_icumsa", use_container_width=True):
+                    client = init_connection()
+                    if client:
+                        try:
+                            sh = client.open("KKKB_250711.xlsx"); worksheet = sh.worksheet("INPUT")
+                            tanggal = datetime.datetime.now(pytz.timezone('Asia/Jakarta')).strftime("%Y-%m-%d")
+                            worksheet.append_row([tanggal, analisa_jam, "Icumsa", brix_icumsa, abs_icumsa, icumsa_res])
+                            st.success(f"Data Icumsa jam {analisa_jam} Berhasil Disimpan! ✅")
+                        except Exception as e: st.error(f"Gagal: {e}")
             with cy:
                 st.markdown(f'<div class="card-result" style="border-color:#00d4ff; background:rgba(0,212,255,0.1); padding:50px;"><h1 style="color:#00d4ff; font-size:60px; font-family:Orbitron; margin:0;">{icumsa_res:.2f}</h1><p style="color:white; margin:0;">IU (ICUMSA UNIT)</p></div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
