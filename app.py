@@ -54,7 +54,7 @@ def hitung_interpolasi(nilai_user, dataset):
             return y0 + (nilai_user - x0) * (y1 - y0) / (x1 - x0)
     return 1.0
 
-# --- 4. CSS (DASHBOARD REPAIR) ---
+# --- 4. CSS ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Poppins:wght@300;400;700&display=swap');
@@ -77,7 +77,6 @@ st.markdown(f"""
         padding: 40px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;
     }}
 
-    /* CSS Tombol Dashboard */
     div.stButton > button {{
         background: rgba(255, 255, 255, 0.07) !important;
         backdrop-filter: blur(10px) !important;
@@ -120,7 +119,6 @@ def jam_realtime():
 
 # --- 6. LOGIKA HALAMAN ---
 if st.session_state.page == 'dashboard':
-    # Header Area
     col_h1, col_h2 = st.columns([2, 1])
     with col_h1:
         st.markdown(f'''<div class="header-logo-box">
@@ -130,7 +128,6 @@ if st.session_state.page == 'dashboard':
     with col_h2:
         jam_realtime()
 
-    # Hero Banner
     st.markdown(f'''<div class="hero-container">
         <div>
             <h1 style="font-family:Orbitron; color:white; font-size:55px; margin:0; line-height:1.1;">CANE METRIX</h1>
@@ -139,7 +136,6 @@ if st.session_state.page == 'dashboard':
         <img src="data:image/png;base64,{logo_cane}" style="height:150px; filter: drop-shadow(0 0 10px #26c4b9);">
     </div>''', unsafe_allow_html=True)
 
-    # Dashboard Grid
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>📝</h1></div>", unsafe_allow_html=True)
@@ -164,11 +160,12 @@ elif st.session_state.page == 'pilih_analisa':
         if st.button("OD TETES", key="sel_od", use_container_width=True):
             st.session_state.page = 'analisa_lab'; st.session_state.analisa_type = 'od'; st.rerun()
     
-    if st.button("🔙 KEMBALI KE DASHBOARD", key="back_dash"):
+    # TOMBOL KEMBALI PANJANG
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("🔙 KEMBALI KE DASHBOARD", key="back_dash", use_container_width=True):
         st.session_state.page = 'dashboard'; st.rerun()
 
 elif st.session_state.page == 'analisa_lab':
-    # --- HALAMAN ANALISA TETES ---
     if st.session_state.analisa_type == 'tetes':
         st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
         with st.container():
@@ -192,7 +189,6 @@ elif st.session_state.page == 'analisa_lab':
                 st.markdown(f'<div class="card-result" style="border-color:#ff4b4b;"><h1 style="color:#ff4b4b; font-family:Orbitron; margin:0;">{hk:.2f}</h1><p style="color:white;">HARKAT KEMURNIAN (HK)</p></div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- HALAMAN OD TETES ---
     elif st.session_state.analisa_type == 'od':
         st.markdown("<h2 style='text-align:center; color:#ff4b4b; font-family:Orbitron;'>🔬 OPTICAL DENSITY TETES</h2>", unsafe_allow_html=True)
         with st.container():
@@ -210,5 +206,7 @@ elif st.session_state.page == 'analisa_lab':
                             f'<p style="color:white; margin:0;">NILAI OD TETES</p></div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
-    if st.button("🔙 KEMBALI KE MENU PILIHAN", key="back_sub"):
+    # TOMBOL KEMBALI PANJANG
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("🔙 KEMBALI KE MENU PILIHAN", key="back_sub", use_container_width=True):
         st.session_state.page = 'pilih_analisa'; st.rerun()
