@@ -17,14 +17,12 @@ def get_base64_logo(file_name):
             return base64.b64encode(f.read()).decode()
     return ""
 
-# Load assets (Pastikan file ini ada di folder yang sama)
 logo_ptpn = get_base64_logo("ptpn.png")
 logo_sgn = get_base64_logo("sgn.png")
 logo_lpp = get_base64_logo("lpp.png")
 logo_kb = get_base64_logo("kb.png")
 logo_cane = get_base64_logo("canemetrix.png")
 
-# Tabel Koreksi Suhu
 data_koreksi = {
     25: -0.19, 26: -0.12, 27: -0.05, 28: 0.02, 29: 0.09, 30: 0.16,
     31: 0.24, 32: 0.31, 33: 0.38, 34: 0.46, 35: 0.54, 36: 0.62,
@@ -45,7 +43,7 @@ def hitung_interpolasi(suhu_user):
             return y0 + (suhu_user - x0) * (y1 - y0) / (x1 - x0)
     return 0.0
 
-# --- 3. CSS MODERN (PIXEL PERFECT) ---
+# --- 3. CSS (SIMPLER & STRONGER) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Poppins:wght@300;400;700&display=swap');
@@ -68,65 +66,55 @@ st.markdown(f"""
         padding: 40px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;
     }}
 
-    /* Container Utama Menu */
-    .menu-container {{
-        position: relative;
-        width: 100%;
-        height: 180px;
-    }}
-
-    /* Visual Card (Background & Hover) */
-    .visual-card {{
-        position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(255, 255, 255, 0.07);
-        backdrop-filter: blur(10px);
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        display: flex; flex-direction: column;
-        justify-content: center; align-items: center;
-        transition: 0.3s ease-in-out;
-        z-index: 1;
-    }}
-
-    .menu-container:hover .visual-card {{
-        background: rgba(38, 196, 185, 0.2);
-        border-color: #26c4b9;
-        transform: translateY(-8px);
-        box-shadow: 0 0 25px rgba(38, 196, 185, 0.4);
-    }}
-
-    /* Paksa Tombol Streamlit jadi Transparan menutupi Card */
+    /* Styling tombol asli Streamlit agar terlihat seperti card */
     div.stButton > button {{
-        position: relative;
-        z-index: 10 !important;
-        width: 100% !important;
+        background: rgba(255, 255, 255, 0.07) !important;
+        backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 20px !important;
+        color: white !important;
         height: 180px !important;
-        background: transparent !important;
-        color: transparent !important;
-        border: none !important;
-        cursor: pointer !important;
+        width: 100% !important;
+        transition: 0.3s !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }}
+
+    div.stButton > button:hover {{
+        background: rgba(38, 196, 185, 0.2) !important;
+        border-color: #26c4b9 !important;
+        box-shadow: 0 0 25px rgba(38, 196, 185, 0.4) !important;
+        transform: translateY(-8px) !important;
     }}
     
-    .clock-text {{ font-family: 'Orbitron'; color: #26c4b9; font-size: 24px; font-weight: bold; }}
+    /* Menghilangkan border fokus tombol */
+    div.stButton > button:focus {{
+        box-shadow: 0 0 25px rgba(38, 196, 185, 0.4) !important;
+        border-color: #26c4b9 !important;
+    }}
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. FRAGMENT JAM (ANTI KEDIP) ---
+# --- 4. FRAGMENT JAM ---
 @st.fragment(run_every="1s")
-def display_jam():
+def jam_realtime():
     tz = pytz.timezone('Asia/Jakarta')
     now = datetime.datetime.now(tz)
     st.markdown(f"""
         <div style="text-align: right; color: white; font-family: 'Poppins';">
             {now.strftime("%d %B %Y")}<br>
-            <span class="clock-text">{now.strftime("%H:%M:%S")} WIB</span>
+            <span style="font-family:'Orbitron'; color:#26c4b9; font-size:24px; font-weight:bold;">
+                {now.strftime("%H:%M:%S")} WIB
+            </span>
         </div>
     """, unsafe_allow_html=True)
 
-# --- 5. LOGIKA NAVIGASI ---
+# --- 5. LOGIKA HALAMAN ---
 
 if st.session_state.page == 'dashboard':
-    # --- HEADER ---
+    # Top Bar
     c1, c2 = st.columns([2, 1])
     with c1:
         st.markdown(f'''<div class="header-logo-box">
@@ -134,9 +122,9 @@ if st.session_state.page == 'dashboard':
             <img src="data:image/png;base64,{logo_lpp}"><img src="data:image/png;base64,{logo_kb}">
         </div>''', unsafe_allow_html=True)
     with c2:
-        display_jam()
+        jam_realtime()
 
-    # --- HERO ---
+    # Hero
     st.markdown(f'''<div class="hero-container">
         <div>
             <h1 style="font-family:Orbitron; color:white; font-size:55px; margin:0;">CANE METRIX</h1>
@@ -145,47 +133,26 @@ if st.session_state.page == 'dashboard':
         <img src="data:image/png;base64,{logo_cane}" style="height:150px; filter:drop-shadow(0 0 15px #26c4b9);">
     </div>''', unsafe_allow_html=True)
 
-    # --- MENU GRID ---
+    # Grid Menu - PAKAI TOMBOL ASLI TANPA OVERLAY RUMIT
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.markdown("""
-            <div class="menu-container">
-                <div class="visual-card">
-                    <h1 style="margin:0;">📝</h1>
-                    <div style="color: white; font-weight: 700; margin-top: 10px;">INPUT DATA</div>
-                </div>
-        """, unsafe_allow_html=True)
-        if st.button("INPUT DATA", key="btn_input"):
+        # Kita taruh icon di atas tombol menggunakan markdown sederhana
+        st.markdown("<div style='text-align:center; margin-bottom:-50px; position:relative; z-index:10; pointer-events:none;'><h1>📝</h1></div>", unsafe_allow_html=True)
+        if st.button("INPUT DATA", key="btn_input", use_container_width=True):
             st.toast("Fitur Input Data segera hadir!")
-        st.markdown("</div>", unsafe_allow_html=True)
         
     with col2:
-        st.markdown("""
-            <div class="menu-container">
-                <div class="visual-card">
-                    <h1 style="margin:0;">🧮</h1>
-                    <div style="color: white; font-weight: 700; margin-top: 10px;">HITUNG ANALISA</div>
-                </div>
-        """, unsafe_allow_html=True)
-        if st.button("HITUNG ANALISA", key="btn_hitung"):
+        st.markdown("<div style='text-align:center; margin-bottom:-50px; position:relative; z-index:10; pointer-events:none;'><h1>🧮</h1></div>", unsafe_allow_html=True)
+        if st.button("HITUNG ANALISA", key="btn_hitung", use_container_width=True):
             st.session_state.page = 'analisa_tetes'
             st.rerun()
-        st.markdown("</div>", unsafe_allow_html=True)
 
     with col3:
-        st.markdown("""
-            <div class="menu-container">
-                <div class="visual-card">
-                    <h1 style="margin:0;">📅</h1>
-                    <div style="color: white; font-weight: 700; margin-top: 10px;">DATABASE HARIAN</div>
-                </div>
-        """, unsafe_allow_html=True)
-        if st.button("DATABASE", key="btn_harian"):
+        st.markdown("<div style='text-align:center; margin-bottom:-50px; position:relative; z-index:10; pointer-events:none;'><h1>📅</h1></div>", unsafe_allow_html=True)
+        if st.button("DATABASE HARIAN", key="btn_harian", use_container_width=True):
             st.toast("Fitur Database segera hadir!")
-        st.markdown("</div>", unsafe_allow_html=True)
 
-# --- HALALMAN ANALISA TETES ---
 elif st.session_state.page == 'analisa_tetes':
     st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
     
