@@ -3,11 +3,12 @@ import datetime
 import pytz
 import base64
 import os
-import time
+from streamlit_autorefresh import st_autorefresh
 
-# --- 1. CONFIG & STATE ---
+# --- 1. INITIAL CONFIG & STATE ---
 st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
 
+# State untuk navigasi
 if 'page' not in st.session_state:
     st.session_state.page = 'dashboard'
 
@@ -46,7 +47,7 @@ def hitung_interpolasi(suhu_user):
             return y0 + (suhu_user - x0) * (y1 - y0) / (x1 - x0)
     return 0.0
 
-# --- 3. CSS (KUNCI UKURAN & LAYOUT) ---
+# --- 3. CSS MODERN (KUNCI UKURAN & POSISI) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Poppins:wght@300;400;700&display=swap');
@@ -57,16 +58,16 @@ st.markdown(f"""
         background-size: cover; background-position: center; background-attachment: fixed;
     }}
 
-    /* Kunci Ukuran Logo di Header */
+    /* Header Logo */
     .header-logo-container img {{
-        height: 35px; width: auto; object-fit: contain;
+        height: 35px !important; width: auto !important; margin-right: 15px;
     }}
 
     .hero-container {{
         background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px);
         border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 30px;
-        padding: 40px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;
-        max-height: 300px; overflow: hidden;
+        padding: 40px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
+        min-height: 250px;
     }}
 
     .logo-cane-large {{ 
@@ -74,9 +75,9 @@ st.markdown(f"""
         filter: drop-shadow(0 0 15px #26c4b9); 
     }}
 
-    /* Card Menu Hover & Click Fix */
+    /* Grid Menu System */
     .menu-wrapper {{
-        position: relative; height: 180px; margin-bottom: 10px;
+        position: relative; height: 180px; margin-bottom: 20px;
     }}
 
     .menu-card-container {{
@@ -84,31 +85,36 @@ st.markdown(f"""
         background: rgba(255, 255, 255, 0.07); backdrop-filter: blur(10px);
         border-radius: 20px; border: 1px solid rgba(255, 255, 255, 0.1);
         display: flex; flex-direction: column; justify-content: center; align-items: center;
-        transition: 0.3s ease-in-out; z-index: 1;
+        transition: 0.3s; z-index: 1;
     }}
 
     .menu-wrapper:hover .menu-card-container {{
         background: rgba(38, 196, 185, 0.2); border: 1px solid #26c4b9;
-        box-shadow: 0 0 25px rgba(38, 196, 185, 0.4); transform: translateY(-8px);
+        box-shadow: 0 0 30px rgba(38, 196, 185, 0.5); transform: translateY(-10px);
     }}
 
+    /* Invisible Overlay Button */
     .stButton > button {{
         position: absolute !important; width: 100% !important; height: 180px !important;
         background: transparent !important; color: transparent !important;
         border: none !important; z-index: 10 !important; cursor: pointer !important;
     }}
     
-    .clock-text {{ font-family: 'Orbitron'; color: #26c4b9; font-size: 22px; font-weight: bold; }}
+    .clock-text {{ font-family: 'Orbitron'; color: #26c4b9; font-size: 24px; font-weight: bold; }}
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. DASHBOARD PAGE ---
+# --- 4. LOGIKA NAVIGASI ---
+
+# HALAMAN DASHBOARD
 if st.session_state.page == 'dashboard':
-    # Header Section
+    # Refresh jam tiap 1 detik (KHUSUS DASHBOARD)
+    st_autorefresh(interval=1000, key="clock_refresh")
+
     c_top1, c_top2 = st.columns([2, 1])
     with c_top1:
         st.markdown(f'''
-            <div class="header-logo-container" style="background:white; padding:10px 20px; border-radius:15px; display:inline-flex; gap:20px; align-items:center;">
+            <div class="header-logo-container" style="background:white; padding:10px 20px; border-radius:15px; display:inline-flex; align-items:center;">
                 <img src="data:image/png;base64,{logo_ptpn}">
                 <img src="data:image/png;base64,{logo_sgn}">
                 <img src="data:image/png;base64,{logo_lpp}">
@@ -116,53 +122,47 @@ if st.session_state.page == 'dashboard':
             </div>''', unsafe_allow_html=True)
     
     with c_top2:
-        # Jam Realtime tanpa flicker seluruh layar
         tz = pytz.timezone('Asia/Jakarta')
         now = datetime.datetime.now(tz)
-        tgl_str = now.strftime("%d %B %Y")
-        jam_placeholder = st.empty()
-        jam_placeholder.markdown(f'''
+        st.markdown(f'''
             <div style="text-align: right; color: white; font-family: 'Poppins';">
-                {tgl_str}<br><span class="clock-text">{now.strftime("%H:%M:%S")} WIB</span>
+                {now.strftime("%d %B %Y")}<br>
+                <span class="clock-text">{now.strftime("%H:%M:%S")} WIB</span>
             </div>''', unsafe_allow_html=True)
 
-    # Hero Section (Kunci ukuran teks & logo)
+    # Hero Section
     st.markdown(f'''
         <div class="hero-container">
             <div style="flex: 1;">
-                <h1 style="font-family:Orbitron; color:white; font-size:50px; margin:0; line-height:1;">CANE METRIX</h1>
-                <p style="color:#26c4b9; font-family:Poppins; font-weight:700; letter-spacing:4px; margin-top:10px;">ACCELERATING QA PERFORMANCE</p>
+                <h1 style="font-family:Orbitron; color:white; font-size:55px; margin:0;">CANE METRIX</h1>
+                <p style="color:#26c4b9; font-family:Poppins; font-weight:700; letter-spacing:5px; margin-top:10px;">ACCELERATING QA PERFORMANCE</p>
             </div>
-            <div style="flex: 0;">
-                <img src="data:image/png;base64,{logo_cane}" class="logo-cane-large">
-            </div>
+            <img src="data:image/png;base64,{logo_cane}" class="logo-cane-large">
         </div>
     ''', unsafe_allow_html=True)
 
-    # Menu Grid
+    # Grid Menu
     col1, col2, col3 = st.columns(3)
+    
     with col1:
-        st.markdown('<div class="menu-wrapper"><div class="menu-card-container"><div style="font-size:45px;">📝</div><div style="color:white; font-weight:700;">INPUT DATA</div></div>', unsafe_allow_html=True)
-        if st.button("", key="btn_input"): st.toast("Segera Hadir!")
+        st.markdown('<div class="menu-wrapper"><div class="menu-card-container"><div style="font-size:50px;">📝</div><div style="color:white; font-weight:700;">INPUT DATA</div></div>', unsafe_allow_html=True)
+        if st.button(" ", key="btn_input"): st.toast("Segera Hadir!")
         st.markdown('</div>', unsafe_allow_html=True)
         
     with col2:
-        st.markdown('<div class="menu-wrapper"><div class="menu-card-container"><div style="font-size:45px;">🧮</div><div style="color:white; font-weight:700;">HITUNG ANALISA</div></div>', unsafe_allow_html=True)
-        if st.button("", key="btn_hitung"):
+        st.markdown('<div class="menu-wrapper"><div class="menu-card-container"><div style="font-size:50px;">🧮</div><div style="color:white; font-weight:700;">HITUNG ANALISA</div></div>', unsafe_allow_html=True)
+        # NAVIGASI FIX
+        if st.button(" ", key="btn_hitung"):
             st.session_state.page = 'analisa_tetes'
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col3:
-        st.markdown('<div class="menu-wrapper"><div class="menu-card-container"><div style="font-size:45px;">📅</div><div style="color:white; font-weight:700;">DATABASE HARIAN</div></div>', unsafe_allow_html=True)
-        st.button("", key="btn_harian")
+        st.markdown('<div class="menu-wrapper"><div class="menu-card-container"><div style="font-size:50px;">📅</div><div style="color:white; font-weight:700;">DATABASE HARIAN</div></div>', unsafe_allow_html=True)
+        st.button(" ", key="btn_harian")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # Tambah delay kecil biar jam update tapi nggak bikin flicker gila-gilaan
-    time.sleep(0.1)
-    st.rerun()
-
-# --- 5. HALAMAN KALKULATOR ---
+# HALAMAN KALKULATOR
 elif st.session_state.page == 'analisa_tetes':
     st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron; margin-bottom:30px;'>🧪 PERHITUNGAN ANALISA TETES</h2>", unsafe_allow_html=True)
     
