@@ -9,6 +9,8 @@ st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
 
 if 'page' not in st.session_state:
     st.session_state.page = 'dashboard'
+if 'analisa_type' not in st.session_state:
+    st.session_state.analisa_type = None
 
 # --- 2. FUNGSI LOGO & ASSETS ---
 def get_base64_logo(file_name):
@@ -23,16 +25,13 @@ logo_lpp = get_base64_logo("lpp.png")
 logo_kb = get_base64_logo("kb.png")
 logo_cane = get_base64_logo("canemetrix.png")
 
-# --- 3. DATABASE TABEL (DARI FOTO LO BEB) ---
-
-# Tabel Koreksi Suhu
+# --- 3. DATABASE TABEL (ICUMSA d27,5) ---
 data_koreksi = {
     27: -0.05, 28: 0.02, 29: 0.09, 30: 0.16, 31: 0.24, 
     32: 0.315, 33: 0.385, 34: 0.465, 35: 0.54, 36: 0.62,
     37: 0.70, 38: 0.78, 39: 0.86, 40: 0.94
 }
 
-# Tabel Berat Jenis d27,5 (ICUMSA)
 data_bj = {
     0.0: 0.996373, 1.0: 1.000201, 2.0: 1.004058, 3.0: 1.007944,
     4.0: 1.011858, 5.0: 1.015801, 6.0: 1.019772, 7.0: 1.023773,
@@ -55,7 +54,7 @@ def hitung_interpolasi(nilai_user, dataset):
             return y0 + (nilai_user - x0) * (y1 - y0) / (x1 - x0)
     return 1.0
 
-# --- 4. CSS (BALIK KE STYLE AWAL) ---
+# --- 4. CSS ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Poppins:wght@300;400;700&display=swap');
@@ -78,7 +77,6 @@ st.markdown(f"""
         padding: 40px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;
     }}
 
-    /* Balikin Styling Tombol Sub-Menu Dashboard */
     div.stButton > button {{
         background: rgba(255, 255, 255, 0.07) !important;
         backdrop-filter: blur(10px) !important;
@@ -109,14 +107,7 @@ st.markdown(f"""
 def jam_realtime():
     tz = pytz.timezone('Asia/Jakarta')
     now = datetime.datetime.now(tz)
-    st.markdown(f"""
-        <div style="text-align: right; color: white; font-family: 'Poppins';">
-            {now.strftime("%d %B %Y")}<br>
-            <span style="font-family:'Orbitron'; color:#26c4b9; font-size:24px; font-weight:bold;">
-                {now.strftime("%H:%M:%S")} WIB
-            </span>
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f'<div style="text-align: right; color: white; font-family:Poppins;">{now.strftime("%d %B %Y")}<br><span style="font-family:Orbitron; color:#26c4b9; font-size:24px; font-weight:bold;">{now.strftime("%H:%M:%S")} WIB</span></div>', unsafe_allow_html=True)
 
 # --- 6. LOGIKA HALAMAN ---
 if st.session_state.page == 'dashboard':
@@ -133,54 +124,88 @@ if st.session_state.page == 'dashboard':
             <h1 style="font-family:Orbitron; color:white; font-size:55px; margin:0;">CANE METRIX</h1>
             <p style="color:#26c4b9; font-family:Poppins; font-weight:700; letter-spacing:5px;">ACCELERATING QA PERFORMANCE</p>
         </div>
-        <img src="data:image/png;base64,{logo_cane}" style="height:150px; filter:drop-shadow(0 0 15px #26c4b9);">
+        <img src="data:image/png;base64,{logo_cane}" style="height:150px;">
     </div>''', unsafe_allow_html=True)
 
-    # Grid Menu Dashboard (Sesuai Dashboard Awal)
     col1, col2, col3 = st.columns(3)
     with col1:
         st.markdown("<div style='text-align:center; margin-bottom:-50px; position:relative; z-index:10; pointer-events:none;'><h1>📝</h1></div>", unsafe_allow_html=True)
-        if st.button("INPUT DATA", key="btn_input", use_container_width=True): st.toast("Segera hadir!")
+        if st.button("INPUT DATA", use_container_width=True): st.toast("Segera hadir!")
     with col2:
         st.markdown("<div style='text-align:center; margin-bottom:-50px; position:relative; z-index:10; pointer-events:none;'><h1>🧮</h1></div>", unsafe_allow_html=True)
-        if st.button("HITUNG ANALISA", key="btn_hitung", use_container_width=True):
-            st.session_state.page = 'analisa_tetes'; st.rerun()
+        if st.button("HITUNG ANALISA", use_container_width=True):
+            st.session_state.page = 'pilih_analisa'; st.rerun()
     with col3:
         st.markdown("<div style='text-align:center; margin-bottom:-50px; position:relative; z-index:10; pointer-events:none;'><h1>📅</h1></div>", unsafe_allow_html=True)
-        if st.button("DATABASE HARIAN", key="btn_harian", use_container_width=True): st.toast("Segera hadir!")
+        if st.button("DATABASE HARIAN", use_container_width=True): st.toast("Segera hadir!")
 
-elif st.session_state.page == 'analisa_tetes':
-    st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
+elif st.session_state.page == 'pilih_analisa':
+    st.markdown("<h2 style='text-align:center; color:white; font-family:Orbitron;'>PILIH JENIS ANALISA</h2>", unsafe_allow_html=True)
+    col_a, col_b = st.columns(2)
+    with col_a:
+        if st.button("🧪\n\nANALISA TETES", use_container_width=True):
+            st.session_state.page = 'analisa_lab'; st.session_state.analisa_type = 'tetes'; st.rerun()
+    with col_b:
+        if st.button("🔬\n\nOPTICAL DENSITY TETES", use_container_width=True):
+            st.session_state.page = 'analisa_lab'; st.session_state.analisa_type = 'od'; st.rerun()
     
-    with st.container():
-        st.markdown('<div class="hero-container" style="display:block;">', unsafe_allow_html=True)
-        cx, cy = st.columns(2)
-        
-        with cx:
-            st.subheader("📥 Data Input Lab")
-            bx_in = st.number_input("Brix Teramati", value=8.80, step=0.01, format="%.2f")
-            sh_in = st.number_input("Suhu (°C)", value=28.3, step=0.1, format="%.1f")
-            pol_baca = st.number_input("Pol Baca", value=11.00, step=0.01, format="%.2f")
-            
-            # --- LOGIKA HITUNG BEB ---
-            kor = hitung_interpolasi(sh_in, data_koreksi)
-            bj = hitung_interpolasi(bx_in, data_bj)
-            
-            brix_akhir = (bx_in + kor) * 10
-            pol_akhir = (0.286 * pol_baca) / bj * 10
-            hk = (pol_akhir / brix_akhir * 100) if brix_akhir != 0 else 0
-            
-            st.write("---")
-            st.info(f"💡 Koreksi: {kor:+.3f} | BJ ICUMSA: {bj:.6f}")
-            st.caption(f"Detail Brix: ({bx_in} + {kor:+.3f}) × 10")
-
-        with cy:
-            st.subheader("📊 Hasil Perhitungan")
-            st.markdown(f'<div class="card-result"><h1 style="color:#26c4b9; font-size:50px; font-family:Orbitron; margin:0;">{brix_akhir:.3f}</h1><p style="color:white; margin:0;">% BRIX AKHIR</p></div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="card-result" style="border-color:#ffcc00; background:rgba(255,204,0,0.1);"><h1 style="color:#ffcc00; font-size:50px; font-family:Orbitron; margin:0;">{pol_akhir:.3f}</h1><p style="color:white; margin:0;">% POL AKHIR</p></div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="card-result" style="border-color:#ff4b4b; background:rgba(255,75,75,0.1);"><h1 style="color:#ff4b4b; font-size:50px; font-family:Orbitron; margin:0;">{hk:.2f}</h1><p style="color:white; margin:0;">HARKAT KEMURNIAN (HK)</p></div>', unsafe_allow_html=True)
-            
-        st.markdown('</div>', unsafe_allow_html=True)
-
     if st.button("🔙 KEMBALI KE DASHBOARD", use_container_width=True):
         st.session_state.page = 'dashboard'; st.rerun()
+
+elif st.session_state.page == 'analisa_lab':
+    # --- HALAMAN ANALISA TETES ---
+    if st.session_state.analisa_type == 'tetes':
+        st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
+        with st.container():
+            st.markdown('<div class="hero-container" style="display:block;">', unsafe_allow_html=True)
+            cx, cy = st.columns(2)
+            with cx:
+                st.subheader("📥 Data Input Lab")
+                bx_in = st.number_input("Brix Teramati", value=8.80, format="%.2f")
+                sh_in = st.number_input("Suhu (°C)", value=28.0, format="%.1f")
+                pol_baca = st.number_input("Pol Baca", value=11.00, format="%.2f")
+                kor = hitung_interpolasi(sh_in, data_koreksi)
+                bj = hitung_interpolasi(bx_in, data_bj)
+                brix_akhir = (bx_in + kor) * 10
+                pol_akhir = (0.286 * pol_baca) / bj * 10
+                st.info(f"💡 Koreksi: {kor:+.3f} | BJ: {bj:.6f}")
+            with cy:
+                st.subheader("📊 Hasil Akhir")
+                st.markdown(f'<div class="card-result"><h1 style="color:#26c4b9; font-size:50px; font-family:Orbitron; margin:0;">{brix_akhir:.3f}</h1><p style="color:white;">% BRIX AKHIR</p></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="card-result" style="border-color:#ffcc00;"><h1 style="color:#ffcc00; font-size:50px; font-family:Orbitron; margin:0;">{pol_akhir:.3f}</h1><p style="color:white;">% POL AKHIR</p></div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    # --- HALAMAN OPTICAL DENSITY (UPDATE BARU) ---
+    elif st.session_state.analisa_type == 'od':
+        st.markdown("<h2 style='text-align:center; color:#ff4b4b; font-family:Orbitron;'>🔬 OPTICAL DENSITY TETES</h2>", unsafe_allow_html=True)
+        with st.container():
+            st.markdown('<div class="hero-container" style="display:block;">', unsafe_allow_html=True)
+            cx, cy = st.columns(2)
+            with cx:
+                st.subheader("📥 Data Input")
+                # Butuh Brix Teramati buat cari BJ sesuai tabel
+                bx_od = st.number_input("Brix Teramati (untuk cari BJ)", value=8.80, format="%.2f")
+                abs_val = st.number_input("Nilai Absorbansi (Abs)", value=0.418, format="%.3f", step=0.001)
+                
+                # Sesuai request: pengenceran 500, berat contoh 1
+                fp = 500
+                berat_contoh = 1
+                
+                # Cari BJ dari tabel
+                bj_od = hitung_interpolasi(bx_od, data_bj)
+                
+                # Rumus: (Abs * BJ * 500) / 1
+                od_result = (abs_val * bj_od * fp) / berat_contoh
+                
+                st.write("---")
+                st.info(f"🔍 BJ d27,5: **{bj_od:.6f}**")
+                st.caption(f"Rumus: ({abs_val} × {bj_od:.6f} × {fp}) / {berat_contoh}")
+            with cy:
+                st.subheader("📊 Hasil OD")
+                st.markdown(f'<div class="card-result" style="border-color:#ff4b4b; background:rgba(255,75,75,0.1);">'
+                            f'<h1 style="color:#ff4b4b; font-size:60px; font-family:Orbitron; margin:0;">{od_result:.3f}</h1>'
+                            f'<p style="color:white; margin:0;">NILAI OD TETES</p></div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    if st.button("🔙 KEMBALI KE MENU PILIHAN", use_container_width=True):
+        st.session_state.page = 'pilih_analisa'; st.rerun()
