@@ -26,15 +26,12 @@ logo_kb = get_base64_logo("kb.png")
 logo_cane = get_base64_logo("canemetrix.png")
 
 # --- 3. DATABASE TABEL ---
-
-# Tabel Koreksi Suhu Brix
 data_koreksi = {
     27: -0.05, 28: 0.02, 29: 0.09, 30: 0.16, 31: 0.24, 
     32: 0.315, 33: 0.385, 34: 0.465, 35: 0.54, 36: 0.62,
     37: 0.70, 38: 0.78, 39: 0.86, 40: 0.94
 }
 
-# Tabel BJ (Update Lengkap sesuai Foto Tabel Hubungan Brix & BJ)
 data_bj = {
     0.0: 0.99640, 5.0: 1.01592, 10.0: 1.03608, 15.0: 1.05691, 20.0: 1.07844,
     25.0: 1.10069, 30.0: 1.12368, 35.0: 1.14745, 40.0: 1.17203, 45.0: 1.19746,
@@ -42,7 +39,6 @@ data_bj = {
     60.0: 1.27885, 65.0: 1.30781, 70.0: 1.33775
 }
 
-# Tabel TSAI
 data_tsai = {
     15.0: 336.00, 16.0: 316.00, 17.0: 298.00, 18.0: 282.00, 19.0: 267.00,
     20.0: 254.50, 21.0: 242.90, 22.0: 231.80, 22.5: 223.60, 23.0: 222.20,
@@ -67,44 +63,33 @@ def hitung_interpolasi(nilai_user, dataset):
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Poppins:wght@300;400;700&display=swap');
-    
     .stApp {{
         background: linear-gradient(rgba(0, 10, 30, 0.85), rgba(0, 10, 30, 0.85)), 
         url("https://images.pexels.com/photos/2280571/pexels-photo-2280571.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2");
         background-size: cover; background-position: center; background-attachment: fixed;
     }}
-
     .header-logo-box {{
         background: white; padding: 10px 20px; border-radius: 15px; 
         display: inline-flex; align-items: center; gap: 15px; margin-bottom: 20px;
     }}
     .header-logo-box img {{ height: 35px; width: auto; }}
-
     .hero-container {{
         background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px);
         border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 30px;
         padding: 40px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center;
     }}
-
     div.stButton > button {{
         background: rgba(255, 255, 255, 0.07) !important;
         backdrop-filter: blur(10px) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 20px !important;
-        color: white !important;
-        height: 180px !important;
-        width: 100% !important;
-        transition: 0.3s !important;
+        border-radius: 20px !important; color: white !important;
+        height: 180px !important; width: 100% !important; transition: 0.3s !important;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
     }}
-
     div.stButton > button:hover {{
         background: rgba(38, 196, 185, 0.2) !important;
-        border-color: #26c4b9 !important;
-        box-shadow: 0 0 25px rgba(38, 196, 185, 0.4) !important;
-        transform: translateY(-8px) !important;
+        border-color: #26c4b9 !important; transform: translateY(-8px) !important;
     }}
-    
     .card-result {{
         background: rgba(38, 196, 185, 0.1); padding: 25px; border-radius: 20px; 
         border: 2px solid #26c4b9; text-align: center; margin-bottom: 15px;
@@ -117,14 +102,10 @@ st.markdown(f"""
 def jam_realtime():
     tz = pytz.timezone('Asia/Jakarta')
     now = datetime.datetime.now(tz)
-    st.markdown(f'''
-        <div style="text-align: right; color: white; font-family: 'Poppins';">
-            {now.strftime("%d %B %Y")}<br>
-            <span style="font-family:'Orbitron'; color:#26c4b9; font-size:24px; font-weight:bold;">
-                {now.strftime("%H:%M:%S")} WIB
-            </span>
-        </div>
-    ''', unsafe_allow_html=True)
+    st.markdown(f'''<div style="text-align: right; color: white; font-family: 'Poppins';">
+        {now.strftime("%d %B %Y")}<br>
+        <span style="font-family:'Orbitron'; color:#26c4b9; font-size:24px; font-weight:bold;">{now.strftime("%H:%M:%S")} WIB</span>
+    </div>''', unsafe_allow_html=True)
 
 # --- 6. LOGIKA HALAMAN ---
 if st.session_state.page == 'dashboard':
@@ -165,13 +146,13 @@ elif st.session_state.page == 'pilih_analisa':
             st.session_state.page = 'analisa_lab'; st.session_state.analisa_type = 'tetes'; st.rerun()
     with m2:
         st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>🔬</h1></div>", unsafe_allow_html=True)
-        if st.button("OD TETES", key="sel_od", use_container_width=True):
+        if st.button("ANALISA OPTICAL DENSITY TETES", key="sel_od", use_container_width=True): # --- GANTI JUDUL ---
             st.session_state.page = 'analisa_lab'; st.session_state.analisa_type = 'od'; st.rerun()
 
     m3, m4 = st.columns(2)
     with m3:
         st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>⚗️</h1></div>", unsafe_allow_html=True)
-        if st.button("ANALISA TSAI TETES", key="sel_tsai", use_container_width=True):
+        if st.button("ANALISA TOTAL SUGAR AS INVERT TETES", key="sel_tsai", use_container_width=True): # --- GANTI JUDUL ---
             st.session_state.page = 'analisa_lab'; st.session_state.analisa_type = 'tsai'; st.rerun()
     with m4:
         st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>💎</h1></div>", unsafe_allow_html=True)
@@ -203,9 +184,9 @@ elif st.session_state.page == 'analisa_lab':
                 st.markdown(f'<div class="card-result" style="border-color:#ff4b4b;"><h1 style="color:#ff4b4b; font-family:Orbitron; margin:0;">{hk:.2f}</h1><p style="color:white;">HK</p></div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- OD TETES ---
+    # --- ANALISA OPTICAL DENSITY TETES ---
     elif st.session_state.analisa_type == 'od':
-        st.markdown("<h2 style='text-align:center; color:#ff4b4b; font-family:Orbitron;'>🔬 OPTICAL DENSITY TETES</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align:center; color:#ff4b4b; font-family:Orbitron;'>🔬 ANALISA OPTICAL DENSITY TETES</h2>", unsafe_allow_html=True)
         with st.container():
             st.markdown('<div class="hero-container" style="display:block;">', unsafe_allow_html=True)
             cx, cy = st.columns(2)
@@ -219,9 +200,9 @@ elif st.session_state.page == 'analisa_lab':
                             f'<h1 style="color:#ff4b4b; font-size:60px; font-family:Orbitron; margin:0;">{od_res:.3f}</h1><p style="color:white;">OD TETES</p></div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- ANALISA TSAI TETES ---
+    # --- ANALISA TOTAL SUGAR AS INVERT TETES ---
     elif st.session_state.analisa_type == 'tsai':
-        st.markdown("<h2 style='text-align:center; color:#ffcc00; font-family:Orbitron;'>⚗️ ANALISA TSAI TETES</h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align:center; color:#ffcc00; font-family:Orbitron;'>⚗️ ANALISA TOTAL SUGAR AS INVERT TETES</h2>", unsafe_allow_html=True)
         with st.container():
             st.markdown('<div class="hero-container" style="display:block;">', unsafe_allow_html=True)
             cx, cy = st.columns(2)
@@ -236,37 +217,23 @@ elif st.session_state.page == 'analisa_lab':
                             f'<h1 style="color:#ffcc00; font-size:60px; font-family:Orbitron; margin:0;">{tsai_final:.3f}</h1><p style="color:white;">% TSAI TETES</p></div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- ANALISA ICUMSA GULA (NEW LOGIC) ---
+    # --- ANALISA ICUMSA GULA ---
     elif st.session_state.analisa_type == 'icumsa':
         st.markdown("<h2 style='text-align:center; color:#00d4ff; font-family:Orbitron;'>💎 ANALISA ICUMSA GULA</h2>", unsafe_allow_html=True)
         with st.container():
             st.markdown('<div class="hero-container" style="display:block;">', unsafe_allow_html=True)
             cx, cy = st.columns(2)
             with cx:
-                st.subheader("📥 Input Data ICUMSA")
                 abs_icumsa = st.number_input("Absorbansi (Abs)", value=0.149, format="%.3f")
                 brix_icumsa = st.number_input("% Brix Gula", value=49.44, format="%.2f")
-                kuvet = 1 # Sesuai perintah tebal kuvet 1 cm
-                
-                # Cari BJ berdasarkan Brix dari tabel (interpolasi)
                 bj_icumsa = hitung_interpolasi(brix_icumsa, data_bj)
-                
-                # Rumus ICUMSA: (ABS * 100.000) / (BRIX * KUVET * BJ)
-                if brix_icumsa > 0:
-                    icumsa_res = (abs_icumsa * 100000) / (brix_icumsa * kuvet * bj_icumsa)
-                else:
-                    icumsa_res = 0
-                
+                icumsa_res = (abs_icumsa * 100000) / (brix_icumsa * 1 * bj_icumsa) if brix_icumsa > 0 else 0
                 st.info(f"🔍 BJ Terdeteksi: {bj_icumsa:.5f}")
-                st.warning(f"📏 Tebal Kuvet: {kuvet} cm")
             with cy:
-                st.subheader("📊 Hasil Akhir")
                 st.markdown(f'<div class="card-result" style="border-color:#00d4ff; background:rgba(0,212,255,0.1); padding:50px;">'
-                            f'<h1 style="color:#00d4ff; font-size:60px; font-family:Orbitron; margin:0;">{icumsa_res:.2f}</h1>'
-                            f'<p style="color:white; margin:0;">IU (ICUMSA UNIT)</p></div>', unsafe_allow_html=True)
+                            f'<h1 style="color:#00d4ff; font-size:60px; font-family:Orbitron; margin:0;">{icumsa_res:.2f}</h1><p style="color:white;">IU (ICUMSA UNIT)</p></div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
-    # Tombol Kembali Panjang
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🔙 KEMBALI KE MENU PILIHAN", key="back_sub", use_container_width=True):
         st.session_state.page = 'pilih_analisa'; st.rerun()
