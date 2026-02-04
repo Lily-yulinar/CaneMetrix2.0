@@ -1,3 +1,5 @@
 streamlit
 pytz
 streamlit-autorefresh
+gspread
+google-auth
