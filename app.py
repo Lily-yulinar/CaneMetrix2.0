@@ -3,12 +3,10 @@ import datetime
 import pytz
 import base64
 import os
-from streamlit_autorefresh import st_autorefresh
 
-# --- 1. INITIAL CONFIG & STATE ---
+# --- 1. CONFIG & STATE ---
 st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
 
-# State untuk navigasi
 if 'page' not in st.session_state:
     st.session_state.page = 'dashboard'
 
@@ -19,14 +17,12 @@ def get_base64_logo(file_name):
             return base64.b64encode(f.read()).decode()
     return ""
 
-# Load Semua Gambar
 logo_ptpn = get_base64_logo("ptpn.png")
 logo_sgn = get_base64_logo("sgn.png")
 logo_lpp = get_base64_logo("lpp.png")
 logo_kb = get_base64_logo("kb.png")
 logo_cane = get_base64_logo("canemetrix.png")
 
-# Tabel Koreksi Suhu
 data_koreksi = {
     25: -0.19, 26: -0.12, 27: -0.05, 28: 0.02, 29: 0.09, 30: 0.16,
     31: 0.24, 32: 0.31, 33: 0.38, 34: 0.46, 35: 0.54, 36: 0.62,
@@ -47,7 +43,7 @@ def hitung_interpolasi(suhu_user):
             return y0 + (suhu_user - x0) * (y1 - y0) / (x1 - x0)
     return 0.0
 
-# --- 3. CSS MODERN (KUNCI UKURAN & POSISI) ---
+# --- 3. CSS MODERN (ANTI-FLICKER) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Poppins:wght@300;400;700&display=swap');
@@ -58,27 +54,17 @@ st.markdown(f"""
         background-size: cover; background-position: center; background-attachment: fixed;
     }}
 
-    /* Header Logo */
-    .header-logo-container img {{
-        height: 35px !important; width: auto !important; margin-right: 15px;
-    }}
+    .header-logo-container img {{ height: 35px !important; margin-right: 15px; }}
 
     .hero-container {{
         background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(15px);
         border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 30px;
         padding: 40px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;
-        min-height: 250px;
     }}
 
-    .logo-cane-large {{ 
-        height: 180px !important; width: auto !important; 
-        filter: drop-shadow(0 0 15px #26c4b9); 
-    }}
+    .logo-cane-large {{ height: 180px !important; filter: drop-shadow(0 0 15px #26c4b9); }}
 
-    /* Grid Menu System */
-    .menu-wrapper {{
-        position: relative; height: 180px; margin-bottom: 20px;
-    }}
+    .menu-wrapper {{ position: relative; height: 180px; margin-bottom: 20px; }}
 
     .menu-card-container {{
         position: absolute; top:0; left:0; right:0; bottom:0;
@@ -93,24 +79,19 @@ st.markdown(f"""
         box-shadow: 0 0 30px rgba(38, 196, 185, 0.5); transform: translateY(-10px);
     }}
 
-    /* Invisible Overlay Button */
+    /* KUNCI: Tombol Streamlit harus di atas dan transparan */
     .stButton > button {{
         position: absolute !important; width: 100% !important; height: 180px !important;
         background: transparent !important; color: transparent !important;
         border: none !important; z-index: 10 !important; cursor: pointer !important;
     }}
     
-    .clock-text {{ font-family: 'Orbitron'; color: #26c4b9; font-size: 24px; font-weight: bold; }}
+    #clock {{ font-family: 'Orbitron'; color: #26c4b9; font-size: 24px; font-weight: bold; }}
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. LOGIKA NAVIGASI ---
-
-# HALAMAN DASHBOARD
+# --- 4. DASHBOARD PAGE ---
 if st.session_state.page == 'dashboard':
-    # Refresh jam tiap 1 detik (KHUSUS DASHBOARD)
-    st_autorefresh(interval=1000, key="clock_refresh")
-
     c_top1, c_top2 = st.columns([2, 1])
     with c_top1:
         st.markdown(f'''
@@ -122,15 +103,26 @@ if st.session_state.page == 'dashboard':
             </div>''', unsafe_allow_html=True)
     
     with c_top2:
+        # JAM JAVASCRIPT: Jalan sendiri di browser tanpa refresh Python
         tz = pytz.timezone('Asia/Jakarta')
         now = datetime.datetime.now(tz)
         st.markdown(f'''
             <div style="text-align: right; color: white; font-family: 'Poppins';">
                 {now.strftime("%d %B %Y")}<br>
-                <span class="clock-text">{now.strftime("%H:%M:%S")} WIB</span>
-            </div>''', unsafe_allow_html=True)
+                <div id="clock">00:00:00 WIB</div>
+            </div>
+            <script>
+                function updateTime() {{
+                    var now = new Date();
+                    var options = {{ timeZone: 'Asia/Jakarta', hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }};
+                    var timeString = now.toLocaleTimeString('id-ID', options);
+                    document.getElementById('clock').innerHTML = timeString + " WIB";
+                }}
+                setInterval(updateTime, 1000);
+                updateTime();
+            </script>
+        ''', unsafe_allow_html=True)
 
-    # Hero Section
     st.markdown(f'''
         <div class="hero-container">
             <div style="flex: 1;">
@@ -141,28 +133,25 @@ if st.session_state.page == 'dashboard':
         </div>
     ''', unsafe_allow_html=True)
 
-    # Grid Menu
     col1, col2, col3 = st.columns(3)
-    
     with col1:
         st.markdown('<div class="menu-wrapper"><div class="menu-card-container"><div style="font-size:50px;">📝</div><div style="color:white; font-weight:700;">INPUT DATA</div></div>', unsafe_allow_html=True)
-        if st.button(" ", key="btn_input"): st.toast("Segera Hadir!")
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.button("", key="btn_input")
         
     with col2:
         st.markdown('<div class="menu-wrapper"><div class="menu-card-container"><div style="font-size:50px;">🧮</div><div style="color:white; font-weight:700;">HITUNG ANALISA</div></div>', unsafe_allow_html=True)
-        # NAVIGASI FIX
-        if st.button(" ", key="btn_hitung"):
+        # TOMBOL NAVIGASI
+        if st.button("", key="btn_hitung"):
             st.session_state.page = 'analisa_tetes'
             st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
     with col3:
         st.markdown('<div class="menu-wrapper"><div class="menu-card-container"><div style="font-size:50px;">📅</div><div style="color:white; font-weight:700;">DATABASE HARIAN</div></div>', unsafe_allow_html=True)
-        st.button(" ", key="btn_harian")
+        st.button("", key="btn_harian")
         st.markdown('</div>', unsafe_allow_html=True)
 
-# HALAMAN KALKULATOR
+# --- 5. HALAMAN KALKULATOR ---
 elif st.session_state.page == 'analisa_tetes':
     st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron; margin-bottom:30px;'>🧪 PERHITUNGAN ANALISA TETES</h2>", unsafe_allow_html=True)
     
