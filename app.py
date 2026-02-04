@@ -1,5 +1,3 @@
-CODING FIX CANE METRIX FONT OKE
-
 import streamlit as st
 import datetime
 import pytz
