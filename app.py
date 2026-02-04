@@ -17,12 +17,14 @@ def get_base64_logo(file_name):
             return base64.b64encode(f.read()).decode()
     return ""
 
+# Load Assets
 logo_ptpn = get_base64_logo("ptpn.png")
 logo_sgn = get_base64_logo("sgn.png")
 logo_lpp = get_base64_logo("lpp.png")
 logo_kb = get_base64_logo("kb.png")
 logo_cane = get_base64_logo("canemetrix.png")
 
+# Tabel Koreksi Suhu (25-50 C)
 data_koreksi = {
     25: -0.19, 26: -0.12, 27: -0.05, 28: 0.02, 29: 0.09, 30: 0.16,
     31: 0.24, 32: 0.31, 33: 0.38, 34: 0.46, 35: 0.54, 36: 0.62,
@@ -43,7 +45,7 @@ def hitung_interpolasi(suhu_user):
             return y0 + (suhu_user - x0) * (y1 - y0) / (x1 - x0)
     return 0.0
 
-# --- 3. CSS (SIMPLER & STRONGER) ---
+# --- 3. CSS (DASHBOARD & BUTTON STYLING) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Poppins:wght@300;400;700&display=swap');
@@ -66,7 +68,7 @@ st.markdown(f"""
         padding: 40px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center;
     }}
 
-    /* Styling tombol asli Streamlit agar terlihat seperti card */
+    /* Styling tombol agar terlihat seperti card menu */
     div.stButton > button {{
         background: rgba(255, 255, 255, 0.07) !important;
         backdrop-filter: blur(10px) !important;
@@ -89,7 +91,6 @@ st.markdown(f"""
         transform: translateY(-8px) !important;
     }}
     
-    /* Menghilangkan border fokus tombol */
     div.stButton > button:focus {{
         box-shadow: 0 0 25px rgba(38, 196, 185, 0.4) !important;
         border-color: #26c4b9 !important;
@@ -97,7 +98,7 @@ st.markdown(f"""
     </style>
     """, unsafe_allow_html=True)
 
-# --- 4. FRAGMENT JAM ---
+# --- 4. FRAGMENT JAM REALTIME ---
 @st.fragment(run_every="1s")
 def jam_realtime():
     tz = pytz.timezone('Asia/Jakarta')
@@ -114,7 +115,7 @@ def jam_realtime():
 # --- 5. LOGIKA HALAMAN ---
 
 if st.session_state.page == 'dashboard':
-    # Top Bar
+    # Header Section
     c1, c2 = st.columns([2, 1])
     with c1:
         st.markdown(f'''<div class="header-logo-box">
@@ -124,7 +125,7 @@ if st.session_state.page == 'dashboard':
     with c2:
         jam_realtime()
 
-    # Hero
+    # Hero Section
     st.markdown(f'''<div class="hero-container">
         <div>
             <h1 style="font-family:Orbitron; color:white; font-size:55px; margin:0;">CANE METRIX</h1>
@@ -133,11 +134,10 @@ if st.session_state.page == 'dashboard':
         <img src="data:image/png;base64,{logo_cane}" style="height:150px; filter:drop-shadow(0 0 15px #26c4b9);">
     </div>''', unsafe_allow_html=True)
 
-    # Grid Menu - PAKAI TOMBOL ASLI TANPA OVERLAY RUMIT
+    # Grid Menu
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        # Kita taruh icon di atas tombol menggunakan markdown sederhana
         st.markdown("<div style='text-align:center; margin-bottom:-50px; position:relative; z-index:10; pointer-events:none;'><h1>📝</h1></div>", unsafe_allow_html=True)
         if st.button("INPUT DATA", key="btn_input", use_container_width=True):
             st.toast("Fitur Input Data segera hadir!")
@@ -154,26 +154,40 @@ if st.session_state.page == 'dashboard':
             st.toast("Fitur Database segera hadir!")
 
 elif st.session_state.page == 'analisa_tetes':
-    st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron; margin-bottom:20px;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
     
     with st.container():
         st.markdown('<div class="hero-container" style="display:block;">', unsafe_allow_html=True)
         cx, cy = st.columns(2)
+        
         with cx:
-            bx = st.number_input("Brix Teramati", value=8.80, step=0.01)
-            sh = st.number_input("Suhu (°C)", value=28.3, step=0.1)
-            kor = hitung_interpolasi(sh)
-            st.info(f"Koreksi Suhu: {kor:+.3f}")
+            st.subheader("📥 Input Data Lab")
+            bx_input = st.number_input("Brix Teramati", value=8.80, step=0.01, format="%.2f")
+            suhu_input = st.number_input("Suhu (°C)", value=28.3, step=0.1, format="%.1f")
+            
+            # --- LOGIKA RUMUS BARU BEB ---
+            # 1. Hitung Koreksi Suhu
+            kor = hitung_interpolasi(suhu_input)
+            
+            # 2. Rumus: (Brix Teramati + Koreksi Suhu) * 10
+            hasil_brix_akhir = (bx_input + kor) * 10
+            # -----------------------------
+            
+            st.write("---")
+            st.info(f"💡 **Koreksi Suhu:** {kor:+.3f}")
+            st.caption(f"Detail: ({bx_input:.2f} + {kor:+.3f}) × 10")
+
         with cy:
-            hasil = (bx * 10) + kor
+            st.subheader("📊 Hasil Akhir")
             st.markdown(f"""
-                <div style="background:rgba(38,196,185,0.1); padding:30px; border-radius:20px; border:2px solid #26c4b9; text-align:center;">
-                    <h1 style="color:#26c4b9; font-size:60px; font-family:Orbitron;">{hasil:.3f}</h1>
-                    <p style="color:white;">% BRIX AKHIR</p>
+                <div style="background:rgba(38,196,185,0.1); padding:45px; border-radius:25px; border:2px solid #26c4b9; text-align:center;">
+                    <h1 style="color:#26c4b9; font-size:75px; font-family:Orbitron; margin:0;">{hasil_brix_akhir:.3f}</h1>
+                    <p style="color:white; font-family:Poppins; font-weight:700; letter-spacing:2px; margin-top:10px;">% BRIX AKHIR</p>
                 </div>
             """, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    if st.button("🔙 KEMBALI KE DASHBOARD"):
+    # Navigasi Kembali
+    if st.button("🔙 KEMBALI KE DASHBOARD", use_container_width=True):
         st.session_state.page = 'dashboard'
         st.rerun()
