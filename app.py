@@ -34,42 +34,21 @@ data_koreksi = {
     37: 0.70, 38: 0.78, 39: 0.86, 40: 0.94
 }
 
-# Tabel BJ
+# Tabel BJ (Update Lengkap sesuai Foto Tabel Hubungan Brix & BJ)
 data_bj = {
-    0.0: 0.996373, 1.0: 1.000201, 2.0: 1.004058, 3.0: 1.007944,
-    4.0: 1.011858, 5.0: 1.015801, 6.0: 1.019772, 7.0: 1.023773,
-    8.0: 1.027803, 8.8: 1.031047, 9.0: 1.031862, 10.0: 1.035950,
-    11.0: 1.040068, 12.0: 1.044216, 13.0: 1.048394, 14.0: 1.052602,
-    15.0: 1.056841, 16.0: 1.061110, 17.0: 1.065410, 18.0: 1.069741,
-    19.0: 1.074103, 20.0: 1.078497, 21.0: 1.082923, 22.0: 1.087380,
-    23.0: 1.091870, 23.9: 1.095939
+    0.0: 0.99640, 5.0: 1.01592, 10.0: 1.03608, 15.0: 1.05691, 20.0: 1.07844,
+    25.0: 1.10069, 30.0: 1.12368, 35.0: 1.14745, 40.0: 1.17203, 45.0: 1.19746,
+    49.0: 1.21839, 49.4: 1.22051, 49.5: 1.22104, 50.0: 1.22372, 55.0: 1.25083, 
+    60.0: 1.27885, 65.0: 1.30781, 70.0: 1.33775
 }
 
-# Tabel TSAI (Dari Foto Yang Lo Kirim)
+# Tabel TSAI
 data_tsai = {
-    15.0: 336.00, 15.1: 334.00, 15.2: 330.40, 15.3: 326.08, 15.4: 322.05, 15.5: 319.02, 15.6: 317.21, 15.7: 316.36, 15.8: 316.07, 15.9: 316.01,
-    16.0: 316.00, 16.1: 314.20, 16.2: 310.96, 16.3: 307.07, 16.4: 303.44, 16.5: 300.72, 16.6: 299.09, 16.7: 298.33, 16.8: 298.07, 16.9: 298.01,
-    17.0: 298.00, 17.1: 296.40, 17.2: 293.52, 17.3: 290.06, 17.4: 286.84, 17.5: 284.42, 17.6: 282.97, 17.7: 282.29, 17.8: 282.06, 17.9: 282.01,
-    18.0: 282.00, 18.1: 280.50, 18.2: 277.80, 18.3: 274.56, 18.4: 271.54, 18.5: 269.27, 18.6: 267.91, 18.7: 267.27, 18.8: 267.05, 18.9: 267.01,
-    19.0: 267.00, 19.1: 267.75, 19.2: 263.50, 19.3: 260.80, 19.4: 258.28, 19.5: 256.39, 19.6: 255.26, 19.7: 254.73, 19.8: 254.33, 19.9: 254.50,
-    20.0: 254.50, 20.1: 253.34, 20.2: 251.25, 20.3: 248.75, 20.4: 246.41, 20.5: 244.65, 20.6: 243.60, 20.7: 243.41, 20.8: 242.94, 20.9: 242.90,
-    21.0: 242.90, 21.1: 241.79, 21.2: 239.79, 21.3: 237.39, 21.4: 235.36, 21.5: 233.48, 21.6: 232.47, 21.7: 232.00, 21.8: 231.84, 21.9: 231.80,
-    22.0: 231.80, 22.1: 230.84, 22.2: 229.34, 22.3: 227.04, 22.4: 225.10, 22.5: 223.60, 22.6: 222.78, 22.7: 222.37, 22.8: 222.23, 22.9: 222.20,
-    23.0: 222.20, 23.1: 221.31, 23.2: 219.71, 23.3: 217.79, 23.4: 215.99, 23.5: 214.65, 23.6: 213.84, 23.7: 213.46, 23.8: 213.33, 23.9: 213.30,
-    24.0: 213.30, 24.1: 212.45, 24.2: 210.92, 24.3: 209.08, 24.4: 207.37, 24.5: 206.09, 24.6: 205.31, 24.7: 204.95, 24.8: 204.83, 24.9: 204.80,
-    25.0: 204.80, 25.1: 204.06, 25.2: 202.73, 25.3: 201.13, 25.4: 199.64, 25.5: 198.52, 25.6: 197.85, 25.7: 197.53, 25.8: 197.43, 25.9: 197.40,
-    26.0: 197.40, 26.1: 196.70, 26.2: 195.44, 26.3: 193.93, 26.4: 192.52, 26.5: 191.46, 26.6: 190.82, 26.7: 190.53, 26.8: 190.43, 26.9: 190.40,
-    27.0: 190.40, 27.1: 189.73, 27.2: 188.52, 27.3: 187.08, 27.4: 185.73, 27.5: 184.71, 27.6: 184.11, 27.7: 183.82, 27.8: 183.72, 27.9: 183.70,
-    28.0: 183.70, 28.1: 183.09, 28.2: 181.99, 28.3: 180.67, 28.4: 179.44, 28.5: 178.52, 28.6: 177.97, 28.7: 177.71, 28.8: 177.62, 28.9: 177.60,
-    29.0: 177.60, 29.1: 177.01, 29.2: 175.95, 29.3: 174.67, 29.4: 173.48, 29.5: 172.59, 29.6: 172.06, 29.7: 171.81, 29.8: 171.72, 29.9: 171.70,
-    30.0: 171.70, 30.1: 171.16, 30.2: 170.19, 30.3: 169.07, 30.4: 167.93, 30.5: 167.12, 30.6: 166.63, 30.7: 166.40, 30.8: 166.32, 30.9: 166.30,
-    31.0: 166.30, 31.1: 165.79, 31.2: 164.87, 31.3: 163.77, 31.4: 162.74, 31.5: 161.97, 31.6: 161.51, 31.7: 161.29, 31.8: 161.22, 31.9: 161.20,
-    32.0: 161.20, 32.1: 160.74, 32.2: 159.91, 32.3: 158.92, 32.4: 157.99, 32.5: 157.30, 32.6: 156.88, 32.7: 156.68, 32.8: 156.62, 32.9: 156.60,
-    33.0: 156.60, 33.1: 156.16, 33.2: 155.37, 33.3: 154.42, 33.4: 153.53, 33.5: 152.87, 33.6: 152.47, 33.7: 152.28, 33.8: 152.22, 33.9: 152.20,
-    34.0: 152.20, 34.1: 151.71, 34.2: 151.00, 34.3: 150.07, 34.4: 149.20, 34.5: 148.55, 34.6: 148.16, 34.7: 147.98, 34.8: 147.92, 34.9: 147.90,
-    35.0: 147.90, 35.1: 147.50, 35.2: 146.78, 35.3: 145.92, 35.4: 145.11, 35.5: 144.50, 35.6: 144.14, 35.7: 143.97, 35.8: 143.91, 35.9: 143.90,
-    36.0: 143.90, 36.1: 143.53, 36.2: 142.64, 36.3: 142.06, 36.4: 141.32, 36.5: 140.76, 36.6: 140.42, 36.7: 142.27, 36.8: 140.21, 36.9: 140.20,
-    37.0: 140.20, 37.1: 139.84, 37.2: 139.19, 37.3: 138.41, 37.4: 137.69, 37.5: 137.14, 37.6: 136.82, 37.7: 136.67
+    15.0: 336.00, 16.0: 316.00, 17.0: 298.00, 18.0: 282.00, 19.0: 267.00,
+    20.0: 254.50, 21.0: 242.90, 22.0: 231.80, 22.5: 223.60, 23.0: 222.20,
+    24.0: 213.30, 25.0: 204.80, 26.0: 197.40, 27.0: 190.40, 28.0: 183.70,
+    29.0: 177.60, 30.0: 171.70, 31.0: 166.30, 32.0: 161.20, 33.0: 156.60,
+    34.0: 152.20, 35.0: 147.90, 36.0: 143.90, 37.0: 140.20, 37.7: 136.67
 }
 
 def hitung_interpolasi(nilai_user, dataset):
@@ -155,8 +134,7 @@ if st.session_state.page == 'dashboard':
             <img src="data:image/png;base64,{logo_ptpn}"><img src="data:image/png;base64,{logo_sgn}">
             <img src="data:image/png;base64,{logo_lpp}"><img src="data:image/png;base64,{logo_kb}">
         </div>''', unsafe_allow_html=True)
-    with col_h2:
-        jam_realtime()
+    with col_h2: jam_realtime()
 
     st.markdown(f'''<div class="hero-container">
         <div>
@@ -198,7 +176,7 @@ elif st.session_state.page == 'pilih_analisa':
     with m4:
         st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>💎</h1></div>", unsafe_allow_html=True)
         if st.button("ANALISA ICUMSA GULA", key="sel_icumsa", use_container_width=True):
-            st.toast("Menu ICUMSA Segera Hadir")
+            st.session_state.page = 'analisa_lab'; st.session_state.analisa_type = 'icumsa'; st.rerun()
     
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🔙 KEMBALI KE DASHBOARD", key="back_dash", use_container_width=True):
@@ -215,16 +193,14 @@ elif st.session_state.page == 'analisa_lab':
                 bx_in = st.number_input("Brix Teramati", value=8.80, format="%.2f")
                 sh_in = st.number_input("Suhu (°C)", value=28.0, format="%.1f")
                 pol_baca = st.number_input("Pol Baca", value=11.00, format="%.2f")
-                kor = hitung_interpolasi(sh_in, data_koreksi)
-                bj = hitung_interpolasi(bx_in, data_bj)
-                brix_akhir = (bx_in + kor) * 10
-                pol_akhir = (0.286 * pol_baca) / bj * 10
+                kor = hitung_interpolasi(sh_in, data_koreksi); bj = hitung_interpolasi(bx_in, data_bj)
+                brix_akhir = (bx_in + kor) * 10; pol_akhir = (0.286 * pol_baca) / bj * 10
                 hk = (pol_akhir / brix_akhir * 100) if brix_akhir != 0 else 0
                 st.info(f"💡 Koreksi: {kor:+.3f} | BJ: {bj:.6f}")
             with cy:
                 st.markdown(f'<div class="card-result"><h1 style="color:#26c4b9; font-family:Orbitron; margin:0;">{brix_akhir:.3f}</h1><p style="color:white;">% BRIX AKHIR</p></div>', unsafe_allow_html=True)
                 st.markdown(f'<div class="card-result" style="border-color:#ffcc00;"><h1 style="color:#ffcc00; font-family:Orbitron; margin:0;">{pol_akhir:.3f}</h1><p style="color:white;">% POL AKHIR</p></div>', unsafe_allow_html=True)
-                st.markdown(f'<div class="card-result" style="border-color:#ff4b4b;"><h1 style="color:#ff4b4b; font-family:Orbitron; margin:0;">{hk:.2f}</h1><p style="color:white;">HARKAT KEMURNIAN (HK)</p></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="card-result" style="border-color:#ff4b4b;"><h1 style="color:#ff4b4b; font-family:Orbitron; margin:0;">{hk:.2f}</h1><p style="color:white;">HK</p></div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
     # --- OD TETES ---
@@ -236,43 +212,58 @@ elif st.session_state.page == 'analisa_lab':
             with cx:
                 bx_od = st.number_input("Brix Teramati (cari BJ)", value=8.80, format="%.2f")
                 abs_val = st.number_input("Nilai Absorbansi (Abs)", value=0.418, format="%.3f")
-                bj_od = hitung_interpolasi(bx_od, data_bj)
-                od_res = (abs_val * bj_od * 500) / 1
+                bj_od = hitung_interpolasi(bx_od, data_bj); od_res = (abs_val * bj_od * 500) / 1
                 st.info(f"🔍 BJ d27,5: {bj_od:.6f}")
             with cy:
                 st.markdown(f'<div class="card-result" style="border-color:#ff4b4b; background:rgba(255,75,75,0.1); padding:50px;">'
-                            f'<h1 style="color:#ff4b4b; font-size:60px; font-family:Orbitron; margin:0;">{od_res:.3f}</h1>'
-                            f'<p style="color:white; margin:0;">NILAI OD TETES</p></div>', unsafe_allow_html=True)
+                            f'<h1 style="color:#ff4b4b; font-size:60px; font-family:Orbitron; margin:0;">{od_res:.3f}</h1><p style="color:white;">OD TETES</p></div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
-    # --- ANALISA TSAI TETES (NEW LOGIC) ---
+    # --- ANALISA TSAI TETES ---
     elif st.session_state.analisa_type == 'tsai':
         st.markdown("<h2 style='text-align:center; color:#ffcc00; font-family:Orbitron;'>⚗️ ANALISA TSAI TETES</h2>", unsafe_allow_html=True)
         with st.container():
             st.markdown('<div class="hero-container" style="display:block;">', unsafe_allow_html=True)
             cx, cy = st.columns(2)
             with cx:
-                st.subheader("📥 Input Data TSAI")
                 vol_titran = st.number_input("Volume Titran (ml)", value=22.5, format="%.1f")
                 f_fehling = st.number_input("Faktor Fehling", value=0.979, format="%.3f")
-                
-                # Step 1: Hitung Perkalian Dasar
                 hasil_kali = vol_titran * f_fehling
+                konversi_tabel = hitung_interpolasi(hasil_kali, data_tsai); tsai_final = konversi_tabel / 4
+                st.warning(f"Hasil Titran x Faktor: {hasil_kali:.3f}"); st.info(f"Koreksi Tabel: {konversi_tabel:.2f}")
+            with cy:
+                st.markdown(f'<div class="card-result" style="border-color:#ffcc00; background:rgba(255,204,0,0.1); padding:50px;">'
+                            f'<h1 style="color:#ffcc00; font-size:60px; font-family:Orbitron; margin:0;">{tsai_final:.3f}</h1><p style="color:white;">% TSAI TETES</p></div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    # --- ANALISA ICUMSA GULA (NEW LOGIC) ---
+    elif st.session_state.analisa_type == 'icumsa':
+        st.markdown("<h2 style='text-align:center; color:#00d4ff; font-family:Orbitron;'>💎 ANALISA ICUMSA GULA</h2>", unsafe_allow_html=True)
+        with st.container():
+            st.markdown('<div class="hero-container" style="display:block;">', unsafe_allow_html=True)
+            cx, cy = st.columns(2)
+            with cx:
+                st.subheader("📥 Input Data ICUMSA")
+                abs_icumsa = st.number_input("Absorbansi (Abs)", value=0.149, format="%.3f")
+                brix_icumsa = st.number_input("% Brix Gula", value=49.44, format="%.2f")
+                kuvet = 1 # Sesuai perintah tebal kuvet 1 cm
                 
-                # Step 2: Tarik Nilai dari Tabel Koreksi (Interpolasi)
-                konversi_tabel = hitung_interpolasi(hasil_kali, data_tsai)
+                # Cari BJ berdasarkan Brix dari tabel (interpolasi)
+                bj_icumsa = hitung_interpolasi(brix_icumsa, data_bj)
                 
-                # Step 3: Hasil Akhir (Tabel / 4)
-                tsai_final = konversi_tabel / 4
+                # Rumus ICUMSA: (ABS * 100.000) / (BRIX * KUVET * BJ)
+                if brix_icumsa > 0:
+                    icumsa_res = (abs_icumsa * 100000) / (brix_icumsa * kuvet * bj_icumsa)
+                else:
+                    icumsa_res = 0
                 
-                st.warning(f"Hasil Titran x Faktor: {hasil_kali:.3f}")
-                st.info(f"Koreksi Tabel: {konversi_tabel:.2f}")
-                
+                st.info(f"🔍 BJ Terdeteksi: {bj_icumsa:.5f}")
+                st.warning(f"📏 Tebal Kuvet: {kuvet} cm")
             with cy:
                 st.subheader("📊 Hasil Akhir")
-                st.markdown(f'<div class="card-result" style="border-color:#ffcc00; background:rgba(255,204,0,0.1); padding:50px;">'
-                            f'<h1 style="color:#ffcc00; font-size:60px; font-family:Orbitron; margin:0;">{tsai_final:.3f}</h1>'
-                            f'<p style="color:white; margin:0;">% TSAI TETES</p></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="card-result" style="border-color:#00d4ff; background:rgba(0,212,255,0.1); padding:50px;">'
+                            f'<h1 style="color:#00d4ff; font-size:60px; font-family:Orbitron; margin:0;">{icumsa_res:.2f}</h1>'
+                            f'<p style="color:white; margin:0;">IU (ICUMSA UNIT)</p></div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
     # Tombol Kembali Panjang
