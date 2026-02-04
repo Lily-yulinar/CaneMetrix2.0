@@ -15,9 +15,10 @@ def pindah_halaman(nama_halaman):
     st.session_state.page = nama_halaman
     st.rerun()
 
-st_autorefresh(interval=2000, key="datarefresh")
+# REFRESH 1 DETIK (Biar jam lebih smooth dan gak telat 2 detik)
+st_autorefresh(interval=1000, key="datarefresh")
 
-# Waktu & Jam
+# Waktu & Jam WIB
 tz = pytz.timezone('Asia/Jakarta')
 now = datetime.datetime.now(tz)
 tgl_skrg = now.strftime("%d %B %Y")
@@ -36,7 +37,7 @@ l_ptpn = get_base64_logo("ptpn.png")
 l_lpp = get_base64_logo("lpp.png")
 l_cane = get_base64_logo("canemetrix.png")
 
-# --- 2. CSS CUSTOM (FIX TAMPILAN) ---
+# --- 2. CSS CUSTOM (FIX SUBMENU & JAM) ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Michroma&family=Poppins:wght@400;700;900&display=swap');
@@ -54,46 +55,44 @@ st.markdown(f"""
     }}
     .partner-box img {{ height: 32px; }}
 
-    /* JAM DIGITAL */
+    /* JAM DIGITAL (GLOWING GREEN) */
     .jam-digital {{
         color: #26c4b9; font-size: 55px; font-weight: 900; 
-        font-family: 'Poppins'; line-height: 1; text-shadow: 0 0 20px rgba(38, 196, 185, 0.8);
+        font-family: 'Poppins'; line-height: 1; text-shadow: 0 0 15px rgba(38, 196, 185, 0.6);
     }}
 
-    /* HERO TEXT */
+    /* HERO TEXT MICHROMA */
     .title-cane {{
         font-family: 'Michroma', sans-serif !important; 
-        color: white; font-size: 60px; font-weight: 900; 
+        color: white; font-size: 55px; font-weight: 900; 
         letter-spacing: 12px; margin: 0;
     }}
     .subtitle-cane {{
         color: #26c4b9; font-family: 'Poppins'; font-weight: 700; 
-        letter-spacing: 6px; margin-top: -10px;
+        letter-spacing: 5px; margin-top: -10px;
     }}
 
-    /* FIX TAMPILAN TOMBOL SUBMENU (KEMBALI KE GAMBAR 1) */
+    /* FIX TOMBOL SUBMENU AGAR KEMBALI SEPERTI GAMBAR 1 */
     div.stButton > button {{
         background: rgba(255, 255, 255, 0.05) !important;
         color: white !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 25px !important;
-        padding: 40px 20px !important;
+        height: 200px !important;
         width: 100% !important;
-        min-height: 180px !important;
-        font-size: 20px !important;
-        font-weight: 700 !important;
         font-family: 'Poppins', sans-serif !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        transition: 0.3s ease;
+        font-size: 18px !important;
+        font-weight: 700 !important;
+        text-align: center !important;
+        display: block !important; /* Paksa tumpuk vertikal */
+        transition: all 0.3s ease-in-out;
     }}
 
     div.stButton > button:hover {{
         border: 1px solid #26c4b9 !important;
         background: rgba(38, 196, 185, 0.2) !important;
-        transform: translateY(-8px) !important;
+        transform: translateY(-10px) !important;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.4);
     }}
     </style>
 """, unsafe_allow_html=True)
@@ -110,13 +109,17 @@ with h1:
     st.markdown(html_logos, unsafe_allow_html=True)
 
 with h2:
-    st.markdown(f'<div style="text-align:right;"><div style="color:white; opacity:0.8;">{tgl_skrg}</div><div class="jam-digital">{jam_skrg}</div></div>', unsafe_allow_html=True)
+    st.markdown(f'''
+    <div style="text-align:right;">
+        <div style="color:white; opacity:0.8; font-family:Poppins;">{tgl_skrg}</div>
+        <div class="jam-digital">{jam_skrg} <span style="font-size:20px;">WIB</span></div>
+    </div>
+    ''', unsafe_allow_html=True)
 
 # --- 4. DASHBOARD ---
 if st.session_state.page == 'dashboard':
-    # Banner Utama
     st.markdown(f'''
-    <div style="background:rgba(255,255,255,0.03); backdrop-filter:blur(15px); padding:50px; border-radius:40px; border:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center; margin-top:30px; margin-bottom:40px;">
+    <div style="background:rgba(255,255,255,0.03); backdrop-filter:blur(15px); padding:55px; border-radius:40px; border:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between; align-items:center; margin-top:30px; margin-bottom:50px;">
         <div>
             <h1 class="title-cane">CANE METRIX</h1>
             <p class="subtitle-cane">ACCELERATING QA PERFORMANCE</p>
@@ -125,17 +128,18 @@ if st.session_state.page == 'dashboard':
     </div>
     ''', unsafe_allow_html=True)
 
-    # SUB MENU (Kembali ke layout 3 kolom rapi)
-    c1, c2, c3 = st.columns(3, gap="large")
+    # SUB MENU (Layout 3 Kolom)
+    # Gunakan format teks \n\n agar ikon dan tulisan terpisah baris
+    c1, c2, c3 = st.columns(3, gap="medium")
     with c1: 
-        st.button("📄\n\nINPUT DATA", on_click=pindah_halaman, args=('input_data',), key="m1")
+        st.button("📄\n\nINPUT DATA", on_click=pindah_halaman, args=('input_data',), key="btn_input")
     with c2: 
-        st.button("🧮\n\nHITUNG ANALISA", on_click=pindah_halaman, args=('analisa_tetes',), key="m2")
+        st.button("🧮\n\nHITUNG ANALISA", on_click=pindah_halaman, args=('analisa_tetes',), key="btn_calc")
     with c3: 
-        st.button("📅\n\nDATABASE HARIAN", on_click=pindah_halaman, args=('db_harian',), key="m3")
+        st.button("📅\n\nDATABASE HARIAN", on_click=pindah_halaman, args=('db_harian',), key="btn_db")
 
-# --- 5. HALAMAN LAIN (Analisa) ---
+# --- 5. HALAMAN LAIN ---
 elif st.session_state.page == 'analisa_tetes':
     st.markdown("<h2 style='color:white; font-family:Michroma; text-align:center;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
-    if st.button("🔙 KEMBALI KE DASHBOARD", on_click=pindah_halaman, args=('dashboard',)):
+    if st.button("🔙 KEMBALI", on_click=pindah_halaman, args=('dashboard',)):
         pass
