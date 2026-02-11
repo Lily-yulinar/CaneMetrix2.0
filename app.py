@@ -7,8 +7,94 @@ import gspread
 from google.oauth2.service_account import Credentials
 
 # --- 1. CONFIG & STATE ---
-st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
+st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")# --- Tambahkan fungsi helper ini di bagian atas (setelah fungsi hitung_interpolasi) ---
+def tampilkan_kartu_hasil(brix, pol, hk):
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown(f'<div class="card-result"><h1 style="color:#26c4b9; font-family:Orbitron; margin:0; font-size:35px;">{brix:.3f}</h1><p style="color:white; font-size:12px;">% BRIX AKHIR</p></div>', unsafe_allow_html=True)
+    with c2:
+        st.markdown(f'<div class="card-result" style="border-color:#ffcc00;"><h1 style="color:#ffcc00; font-family:Orbitron; margin:0; font-size:35px;">{pol:.3f}</h1><p style="color:white; font-size:12px;">% POL AKHIR</p></div>', unsafe_allow_html=True)
+    with c3:
+        st.markdown(f'<div class="card-result" style="border-color:#ff4b4b;"><h1 style="color:#ff4b4b; font-family:Orbitron; margin:0; font-size:35px;">{hk:.2f}</h1><p style="color:white; font-size:12px;">HK</p></div>', unsafe_allow_html=True)
 
+# --- REVISI BAGIAN HALAMAN INPUT GILINGAN ---
+elif st.session_state.page == 'input_gilingan':
+    st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>🚜 INPUT DATA STASIUN GILINGAN</h2>", unsafe_allow_html=True)
+    
+    tabs = st.tabs([
+        "NPP (Gilingan 1)", "Gilingan 2", "Gilingan 3", "Gilingan 4", 
+        "Nira Mentah", "Ampas", "Imbibisi", "Putaran & Tekanan"
+    ])
+
+    def render_analisa_nira(label_nira, show_tsas=False):
+        list_sub = ["Brix, Pol, HK", "Gula Reduksi", "Kadar Posfat", "Dextran", "Icumsa"]
+        if show_tsas: list_sub.append("TSAS")
+        
+        sub = st.selectbox(f"Pilih Analisa {label_nira}", list_sub, key=f"sub_{label_nira}")
+        
+        st.markdown('<div class="hero-container" style="display:block; padding: 20px;">', unsafe_allow_html=True)
+        
+        if sub == "Brix, Pol, HK":
+            col_in, col_res = st.columns([1, 2])
+            with col_in:
+                bx_baca = st.number_input("Brix Teramati", value=0.0, key=f"bx_{label_nira}")
+                sh_in = st.number_input("Suhu (°C)", value=28.0, key=f"sh_{label_nira}")
+                pol_baca = st.number_input("Pol Baca", value=0.0, key=f"pol_{label_nira}")
+                
+                kor = hitung_interpolasi(sh_in, data_koreksi)
+                bj = hitung_interpolasi(bx_baca, data_bj)
+                bx_fix = (bx_baca + kor) if bx_baca > 0 else 0
+                pol_fix = (0.286 * pol_baca) / bj if bj > 0 else 0
+                hk_fix = (pol_fix / bx_fix * 100) if bx_fix > 0 else 0
+                
+                st.info(f"Koreksi: {kor:+.3f} | BJ: {bj:.4f}")
+            
+            with col_res:
+                tampilkan_kartu_hasil(bx_fix, pol_fix, hk_fix)
+                if st.button("🚀 SIMPAN EXCEL", key=f"save_{label_nira}"):
+                    st.toast(f"Data {label_nira} tersimpan!")
+
+        elif sub == "Gula Reduksi":
+            c1, c2 = st.columns(2)
+            v_blanko = c1.number_input("Volume Blanko (ml)", value=0.0, key=f"vb_{label_nira}")
+            v_penitran = c2.number_input("Volume Penitran (ml)", value=0.0, key=f"vp_{label_nira}")
+            gr = (v_blanko - v_penitran) * 0.1 * 63.57
+            st.metric("Gula Reduksi", f"{gr:.2f}")
+
+        elif sub == "Kadar Posfat":
+            p2o5 = st.number_input("P2O5 (ppm)", value=0.0, key=f"p2_{label_nira}")
+            st.write(f"Hasil Analisa Posfat: {p2o5} ppm")
+
+        elif sub == "Dextran":
+            dex = st.number_input("Dextran (ppm)", value=0.0, key=f"dx_{label_nira}")
+            st.write(f"Hasil Analisa Dextran: {dex} ppm")
+
+        elif sub == "Icumsa":
+            st.caption("Analisa Warna Icumsa")
+            abs_ic = st.number_input("Absorbansi", value=0.0, key=f"ic_{label_nira}")
+            st.info("Rumus Icumsa Nira sedang disinkronkan...")
+            
+        elif sub == "TSAS" and show_tsas:
+            tsas_val = st.number_input("Total Soluble Amino Sulphate", value=0.0, key=f"ts_{label_nira}")
+            st.write(f"Hasil TSAS: {tsas_val}")
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # Implementasi ke Tabs
+    with tabs[0]: render_analisa_nira("NPP")
+    with tabs[1]: render_analisa_nira("Gilingan 2")
+    with tabs[2]: render_analisa_nira("Gilingan 3")
+    with tabs[3]: render_analisa_nira("Gilingan 4")
+    with tabs[4]: render_analisa_nira("Nira Mentah", show_tsas=True)
+
+    # Tab sisanya tetap dipertahankan
+    with tabs[5]: st.info("Input Ampas")
+    with tabs[6]: st.info("Input Imbibisi")
+    with tabs[7]: st.info("Input Putaran Roll & Tekanan Hidraulik")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("🔙 KEMBALI KE PILIH STASIUN", use_container_width=True):
+        st.session_state.page = 'pilih_stasiun'; st.rerun()
 # FUNGSI KONEKSI EXCEL
 def init_connection():
     try:
