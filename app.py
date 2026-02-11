@@ -75,28 +75,6 @@ st.markdown(f"""
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNGSI RENDER HASIL ANALISA (Gaya Gambar 2) ---
-def render_brix_pol_hk(label, key_prefix):
-    st.markdown(f"### Analisa {label}")
-    c_left, c_right = st.columns([1, 1.2])
-    with c_left:
-        bx_baca = st.number_input(f"Brix Teramati ({label})", value=0.0, key=f"{key_prefix}_bx")
-        suhu = st.number_input(f"Suhu (°C) ({label})", value=28.0, key=f"{key_prefix}_sh")
-        pol_baca = st.number_input(f"Pol Baca ({label})", value=0.0, key=f"{key_prefix}_pol")
-        jam = st.selectbox("Analisa Jam", options=[f"{(i % 24):02d}:00" for i in range(6, 30)], key=f"{key_prefix}_jam")
-        kor = hitung_interpolasi(suhu, data_koreksi)
-        bj = hitung_interpolasi(bx_baca, data_bj)
-        brix_fix = (bx_baca + kor) if bx_baca > 0 else 0
-        pol_fix = (0.286 * pol_baca) / bj if bj > 0 else 0
-        hk = (pol_fix / brix_fix * 100) if brix_fix > 0 else 0
-        st.info(f"💡 Koreksi: {kor:+.3f} | BJ: {bj:.6f}")
-        if st.button(f"🚀 SIMPAN DATA {label}", key=f"{key_prefix}_save", use_container_width=True):
-            st.toast(f"Data {label} jam {jam} Berhasil Diproses")
-    with c_right:
-        st.markdown(f'<div class="card-result"><h1 style="color:#26c4b9; font-family:Orbitron; margin:0;">{brix_fix:.3f}</h1><p style="color:white;">% BRIX AKHIR</p></div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="card-result" style="border-color:#ffcc00;"><h1 style="color:#ffcc00; font-family:Orbitron; margin:0;">{pol_fix:.3f}</h1><p style="color:white;">% POL AKHIR</p></div>', unsafe_allow_html=True)
-        st.markdown(f'<div class="card-result" style="border-color:#ff4b4b;"><h1 style="color:#ff4b4b; font-family:Orbitron; margin:0;">{hk:.2f}</h1><p style="color:white;">HK</p></div>', unsafe_allow_html=True)
-
 # --- 5. JAM REALTIME ---
 @st.fragment(run_every="1s")
 def jam_realtime():
@@ -116,27 +94,33 @@ if st.session_state.page == 'dashboard':
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>📝</h1></div>", unsafe_allow_html=True)
+        # BUTTON INPUT DATA SEKARANG AKTIF KE PILIH STASIUN
         if st.button("INPUT DATA", key="dash_input", use_container_width=True): 
             st.session_state.page = 'pilih_stasiun'; st.rerun()
     with c2:
         st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>🧮</h1></div>", unsafe_allow_html=True)
+        # BUTTON HITUNG ANALISA TETAP AMAN
         if st.button("HITUNG ANALISA", key="dash_hitung", use_container_width=True):
             st.session_state.page = 'pilih_analisa'; st.rerun()
     with c3:
         st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>📅</h1></div>", unsafe_allow_html=True)
         if st.button("DATABASE HARIAN", key="dash_db", use_container_width=True): st.toast("Segera Hadir")
 
-# === HALAMAN PILIH STASIUN (6 MENU) ===
+# === HALAMAN PILIH STASIUN (MENU BARU) ===
 elif st.session_state.page == 'pilih_stasiun':
     st.markdown("<h2 style='text-align:center; color:white; font-family:Orbitron;'>PILIH STASIUN</h2>", unsafe_allow_html=True)
+    
+    # Baris 1
     r1c1, r1c2, r1c3 = st.columns(3)
     with r1c1:
-        if st.button("🚜 STASIUN GILINGAN", use_container_width=True): st.session_state.page = 'input_gilingan'; st.rerun()
+        if st.button("🚜 STASIUN GILINGAN", use_container_width=True):
+            st.session_state.page = 'input_gilingan'; st.rerun()
     with r1c2:
         if st.button("🌫️ STASIUN PEMURNIAN", use_container_width=True): st.toast("Segera Hadir")
     with r1c3:
         if st.button("🔥 STASIUN PENGUAPAN", use_container_width=True): st.toast("Segera Hadir")
     
+    # Baris 2
     r2c1, r2c2, r2c3 = st.columns(3)
     with r2c1:
         if st.button("🥘 STASIUN MASAKAN", use_container_width=True): st.toast("Segera Hadir")
@@ -149,94 +133,214 @@ elif st.session_state.page == 'pilih_stasiun':
     if st.button("🔙 KEMBALI KE DASHBOARD", use_container_width=True):
         st.session_state.page = 'dashboard'; st.rerun()
 
-# === HALAMAN INPUT GILINGAN ===
+# === HALAMAN INPUT GILINGAN (MENU BARU DETAILED) ===
 elif st.session_state.page == 'input_gilingan':
     st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>🚜 INPUT DATA STASIUN GILINGAN</h2>", unsafe_allow_html=True)
-    tabs = st.tabs(["NPP (Gilingan 1)", "Gilingan 2", "Gilingan 3", "Gilingan 4", "Nira Mentah", "Ampas", "Imbibisi", "Putaran & Tekanan"])
     
-    with tabs[0]: # NPP
-        sub = st.tabs(["(Brix, Pol, HK)", "Gula Reduksi", "Kadar Posfat", "Dextran", "Icumsa"])
-        with sub[0]: render_brix_pol_hk("NPP", "npp")
-    with tabs[1]: render_brix_pol_hk("Gilingan 2", "g2")
-    with tabs[2]: render_brix_pol_hk("Gilingan 3", "g3")
-    with tabs[3]: render_brix_pol_hk("Gilingan 4", "g4")
-    with tabs[4]: # Nira Mentah
-        sub_nm = st.tabs(["(Brix, Pol, HK)", "Gula Reduksi", "Kadar Posfat", "Dextran", "Icumsa", "TSAS"])
-        with sub_nm[0]: render_brix_pol_hk("Nira Mentah", "nm")
+    # Tab Menu Sesuai Gambar 2
+    tabs = st.tabs([
+        "NPP (Gilingan 1)", "Gilingan 2", "Gilingan 3", "Gilingan 4", 
+        "Nira Mentah", "Ampas", "Imbibisi", "Putaran & Tekanan"
+    ])
     
+    # TAB 1: NIRA PERAHAN PERTAMA (NPP)
+    with tabs[0]:
+        st.markdown('<div class="hero-container" style="display:block;">', unsafe_allow_html=True)
+        st.subheader("Analisa Nira Gilingan I (NPP)")
+        c_npp1, c_npp2 = st.columns(2)
+        
+        with c_npp1:
+            st.caption("Data Umum & Fisik")
+            bx_npp = st.number_input("Brix Baca", value=0.0)
+            sh_npp = st.number_input("Suhu (°C)", value=28.0)
+            pol_npp_baca = st.number_input("Pol Baca", value=0.0)
+            
+            # Hitung Otomatis Brix Pol (Sama kayak Tetes logic)
+            kor_npp = hitung_interpolasi(sh_npp, data_koreksi)
+            bj_npp = hitung_interpolasi(bx_npp, data_bj)
+            
+            bx_npp_fix = (bx_npp + kor_npp) if bx_npp > 0 else 0
+            pol_npp_fix = (0.286 * pol_npp_baca) / bj_npp if bj_npp > 0 else 0
+            hk_npp = (pol_npp_fix / bx_npp_fix * 100) if bx_npp_fix > 0 else 0
+            
+            st.markdown(f"**Hasil:** Brix: `{bx_npp_fix:.2f}` | Pol: `{pol_npp_fix:.2f}` | HK: `{hk_npp:.2f}`")
+
+        with c_npp2:
+            st.caption("Analisa Kimia Lanjutan")
+            p2o5_npp = st.number_input("P2O5 (ppm)", value=0.0)
+            dextran_npp = st.number_input("Dextran (ppm)", value=0.0)
+            icumsa_npp = st.number_input("Icumsa (IU)", value=0.0) # Rumus menyusul
+            
+            st.markdown("---")
+            st.caption("Gula Reduksi")
+            v_blanko = st.number_input("Volume Blanko (ml)", value=0.0)
+            v_penitran = st.number_input("Volume Penitran (ml)", value=0.0)
+            
+            # Rumus Gula Reduksi
+            gula_reduksi = (v_blanko - v_penitran) * 0.1 * 63.57
+            st.info(f"🍭 Gula Reduksi: {gula_reduksi:.2f}")
+
+    # TAB 2: GILINGAN 2 (Bisa dicopas logicnya nanti)
+    with tabs[1]:
+        st.info("Input Nira Gilingan 2 - Coming Soon")
+    
+    # TAB 5: NIRA MENTAH
+    with tabs[4]:
+        st.subheader("Analisa Nira Mentah (NM)")
+        st.info("Menu Input Nira Mentah (Logic sama dengan NPP + Analisa Kapur dll) - Coming Soon")
+
+    # TAB LAINNYA
+    with tabs[5]: st.info("Input Ampas")
+    with tabs[6]: st.info("Input Imbibisi")
+    with tabs[7]: st.info("Input Putaran Roll & Tekanan Hidraulik")
+
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🔙 KEMBALI KE PILIH STASIUN", use_container_width=True):
         st.session_state.page = 'pilih_stasiun'; st.rerun()
 
-# === HALAMAN PILIH ANALISA (4 MENU KEMBALI) ===
+# === HALAMAN PILIH ANALISA (TETAP ADA) ===
 elif st.session_state.page == 'pilih_analisa':
     st.markdown("<h2 style='text-align:center; color:white; font-family:Orbitron;'>PILIH JENIS ANALISA</h2>", unsafe_allow_html=True)
     m1, m2 = st.columns(2)
     with m1:
-        if st.button("🧪 ANALISA TETES", use_container_width=True):
+        st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>🧪</h1></div>", unsafe_allow_html=True)
+        if st.button("ANALISA TETES", key="sel_tetes", use_container_width=True):
             st.session_state.page = 'analisa_lab'; st.session_state.analisa_type = 'tetes'; st.rerun()
     with m2:
-        if st.button("🔬 OD TETES", use_container_width=True):
+        st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>🔬</h1></div>", unsafe_allow_html=True)
+        if st.button("OD TETES", key="sel_od", use_container_width=True):
             st.session_state.page = 'analisa_lab'; st.session_state.analisa_type = 'od'; st.rerun()
-    
     m3, m4 = st.columns(2)
     with m3:
-        if st.button("⚗️ ANALISA TSAI TETES", use_container_width=True):
+        st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>⚗️</h1></div>", unsafe_allow_html=True)
+        if st.button("ANALISA TSAI TETES", key="sel_tsai", use_container_width=True):
             st.session_state.page = 'analisa_lab'; st.session_state.analisa_type = 'tsai'; st.rerun()
     with m4:
-        if st.button("💎 ANALISA ICUMSA GULA", use_container_width=True):
+        st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>💎</h1></div>", unsafe_allow_html=True)
+        if st.button("ANALISA ICUMSA GULA", key="sel_icumsa", use_container_width=True):
             st.session_state.page = 'analisa_lab'; st.session_state.analisa_type = 'icumsa'; st.rerun()
-    
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("🔙 KEMBALI KE DASHBOARD", use_container_width=True):
+    if st.button("🔙 KEMBALI KE DASHBOARD", key="back_dash", use_container_width=True):
         st.session_state.page = 'dashboard'; st.rerun()
 
-# === HALAMAN ANALISA LAB (SEMUA RUMUS BALIK) ===
+# === HALAMAN ANALISA LAB (TETAP ADA & JALAN) ===
 elif st.session_state.page == 'analisa_lab':
     list_jam = [f"{(i % 24):02d}:00" for i in range(6, 30)]
 
+    # --- ANALISA TETES ---
     if st.session_state.analisa_type == 'tetes':
         st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
-        # ... logic tetes ...
-        render_brix_pol_hk("Analisa Tetes", "lab_tetes") # Menggunakan fungsi render biar konsisten warnanya
+        with st.container():
+            st.markdown('<div class="hero-container" style="display:block;">', unsafe_allow_html=True)
+            cx, cy = st.columns(2)
+            with cx:
+                bx_in = st.number_input("Brix Teramati", value=8.80, format="%.2f")
+                sh_in = st.number_input("Suhu (°C)", value=28.0, format="%.1f")
+                pol_baca = st.number_input("Pol Baca", value=11.00, format="%.2f")
+                analisa_jam = st.selectbox("Analisa Jam", options=list_jam)
+                
+                kor = hitung_interpolasi(sh_in, data_koreksi); bj = hitung_interpolasi(bx_in, data_bj)
+                brix_akhir = (bx_in + kor) * 10; pol_akhir = (0.286 * pol_baca) / bj * 10
+                hk = (pol_akhir / brix_akhir * 100) if brix_akhir != 0 else 0
+                st.info(f"💡 Koreksi: {kor:+.3f} | BJ: {bj:.6f}")
+                
+                if st.button("🚀 SIMPAN KE EXCEL", key="btn_tetes", use_container_width=True):
+                    client = init_connection()
+                    if client:
+                        try:
+                            sh = client.open("KKKB_250711")
+                            worksheet = sh.worksheet("INPUT")
+                            tanggal = datetime.datetime.now(pytz.timezone('Asia/Jakarta')).strftime("%Y-%m-%d")
+                            worksheet.append_row([tanggal, analisa_jam, "Tetes", brix_akhir, pol_akhir, hk])
+                            st.success(f"Data jam {analisa_jam} Berhasil Disimpan! ✅")
+                        except Exception as e: st.error(f"Gagal Simpan: {e}")
+                    else: st.error("Koneksi ke Google Service Gagal.")
+            with cy:
+                st.markdown(f'<div class="card-result"><h1 style="color:#26c4b9; font-family:Orbitron; margin:0;">{brix_akhir:.3f}</h1><p style="color:white;">% BRIX AKHIR</p></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="card-result" style="border-color:#ffcc00;"><h1 style="color:#ffcc00; font-family:Orbitron; margin:0;">{pol_akhir:.3f}</h1><p style="color:white;">% POL AKHIR</p></div>', unsafe_allow_html=True)
+                st.markdown(f'<div class="card-result" style="border-color:#ff4b4b;"><h1 style="color:#ff4b4b; font-family:Orbitron; margin:0;">{hk:.2f}</h1><p style="color:white;">HK</p></div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
+    # --- OD TETES ---
     elif st.session_state.analisa_type == 'od':
         st.markdown("<h2 style='text-align:center; color:#ff4b4b; font-family:Orbitron;'>🔬 OPTICAL DENSITY TETES</h2>", unsafe_allow_html=True)
-        cx, cy = st.columns(2)
-        with cx:
-            bx_od = st.number_input("Brix Teramati", value=8.80)
-            abs_val = st.number_input("Nilai Absorbansi", value=0.418, format="%.3f")
-            bj_od = hitung_interpolasi(bx_od, data_bj)
-            od_res = (abs_val * bj_od * 500)
-            if st.button("🚀 SIMPAN OD", use_container_width=True): st.success("Tersimpan!")
-        with cy:
-            st.markdown(f'<div class="card-result" style="border-color:#ff4b4b;"><h1 style="color:#ff4b4b; font-family:Orbitron;">{od_res:.3f}</h1><p>OD TETES</p></div>', unsafe_allow_html=True)
+        with st.container():
+            st.markdown('<div class="hero-container" style="display:block;">', unsafe_allow_html=True)
+            cx, cy = st.columns(2)
+            with cx:
+                bx_od = st.number_input("Brix Teramati (cari BJ)", value=8.80, format="%.2f")
+                abs_val = st.number_input("Nilai Absorbansi (Abs)", value=0.418, format="%.3f")
+                analisa_jam = st.selectbox("Analisa Jam", options=list_jam)
+                bj_od = hitung_interpolasi(bx_od, data_bj); od_res = (abs_val * bj_od * 500) / 1
+                st.info(f"🔍 BJ d27,5: {bj_od:.6f}")
+                
+                if st.button("🚀 SIMPAN KE EXCEL", key="btn_od", use_container_width=True):
+                    client = init_connection()
+                    if client:
+                        try:
+                            sh = client.open("KKKB_250711"); worksheet = sh.worksheet("INPUT")
+                            tanggal = datetime.datetime.now(pytz.timezone('Asia/Jakarta')).strftime("%Y-%m-%d")
+                            worksheet.append_row([tanggal, analisa_jam, "OD Tetes", bx_od, abs_val, od_res])
+                            st.success(f"Data OD jam {analisa_jam} Berhasil Disimpan! ✅")
+                        except Exception as e: st.error(f"Gagal: {e}")
+            with cy:
+                st.markdown(f'<div class="card-result" style="border-color:#ff4b4b; background:rgba(255,75,75,0.1); padding:50px;"><h1 style="color:#ff4b4b; font-size:60px; font-family:Orbitron; margin:0;">{od_res:.3f}</h1><p style="color:white;">OD TETES</p></div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
+    # --- ANALISA TSAI TETES ---
     elif st.session_state.analisa_type == 'tsai':
         st.markdown("<h2 style='text-align:center; color:#ffcc00; font-family:Orbitron;'>⚗️ ANALISA TSAI TETES</h2>", unsafe_allow_html=True)
-        cx, cy = st.columns(2)
-        with cx:
-            vol = st.number_input("Volume Titran (ml)", value=22.5)
-            f_f = st.number_input("Faktor Fehling", value=0.979)
-            hasil_kali = vol * f_f
-            konv = hitung_interpolasi(hasil_kali, data_tsai)
-            tsai_final = konv / 4
-            if st.button("🚀 SIMPAN TSAI", use_container_width=True): st.success("Tersimpan!")
-        with cy:
-            st.markdown(f'<div class="card-result" style="border-color:#ffcc00;"><h1 style="color:#ffcc00; font-family:Orbitron;">{tsai_final:.3f}</h1><p>% TSAI</p></div>', unsafe_allow_html=True)
+        with st.container():
+            st.markdown('<div class="hero-container" style="display:block;">', unsafe_allow_html=True)
+            cx, cy = st.columns(2)
+            with cx:
+                vol_titran = st.number_input("Volume Titran (ml)", value=22.5, format="%.1f")
+                f_fehling = st.number_input("Faktor Fehling", value=0.979, format="%.3f")
+                analisa_jam = st.selectbox("Analisa Jam", options=list_jam)
+                hasil_kali = vol_titran * f_fehling
+                konversi_tabel = hitung_interpolasi(hasil_kali, data_tsai); tsai_final = konversi_tabel / 4
+                st.warning(f"Hasil Titran x Faktor: {hasil_kali:.3f}"); st.info(f"Koreksi Tabel: {konversi_tabel:.2f}")
 
+                if st.button("🚀 SIMPAN KE EXCEL", key="btn_tsai", use_container_width=True):
+                    client = init_connection()
+                    if client:
+                        try:
+                            sh = client.open("KKKB_250711"); worksheet = sh.worksheet("INPUT")
+                            tanggal = datetime.datetime.now(pytz.timezone('Asia/Jakarta')).strftime("%Y-%m-%d")
+                            worksheet.append_row([tanggal, analisa_jam, "TSAI", vol_titran, f_fehling, tsai_final])
+                            st.success(f"Data TSAI jam {analisa_jam} Berhasil Disimpan! ✅")
+                        except Exception as e: st.error(f"Gagal: {e}")
+            with cy:
+                st.markdown(f'<div class="card-result" style="border-color:#ffcc00; background:rgba(255,204,0,0.1); padding:50px;"><h1 style="color:#ffcc00; font-size:60px; font-family:Orbitron; margin:0;">{tsai_final:.3f}</h1><p style="color:white;">% TSAI TETES</p></div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    # --- ANALISA ICUMSA GULA ---
     elif st.session_state.analisa_type == 'icumsa':
         st.markdown("<h2 style='text-align:center; color:#00d4ff; font-family:Orbitron;'>💎 ANALISA ICUMSA GULA</h2>", unsafe_allow_html=True)
-        cx, cy = st.columns(2)
-        with cx:
-            abs_i = st.number_input("Absorbansi", value=0.149)
-            brix_i = st.number_input("% Brix Gula", value=49.44)
-            bj_i = hitung_interpolasi(brix_i, data_bj)
-            icumsa_res = (abs_i * 100000) / (brix_i * 1 * bj_i) if brix_i > 0 else 0
-            if st.button("🚀 SIMPAN ICUMSA", use_container_width=True): st.success("Tersimpan!")
-        with cy:
-            st.markdown(f'<div class="card-result" style="border-color:#00d4ff;"><h1 style="color:#00d4ff; font-family:Orbitron;">{icumsa_res:.2f}</h1><p>IU</p></div>', unsafe_allow_html=True)
+        with st.container():
+            st.markdown('<div class="hero-container" style="display:block;">', unsafe_allow_html=True)
+            cx, cy = st.columns(2)
+            with cx:
+                abs_icumsa = st.number_input("Absorbansi (Abs)", value=0.149, format="%.3f")
+                brix_icumsa = st.number_input("% Brix Gula", value=49.44, format="%.2f")
+                analisa_jam = st.selectbox("Analisa Jam", options=list_jam)
+                bj_icumsa = hitung_interpolasi(brix_icumsa, data_bj)
+                icumsa_res = (abs_icumsa * 100000) / (brix_icumsa * 1 * bj_icumsa) if brix_icumsa > 0 else 0
+                st.info(f"🔍 BJ Terdeteksi: {bj_icumsa:.5f}")
+
+                if st.button("🚀 SIMPAN KE EXCEL", key="btn_icumsa", use_container_width=True):
+                    client = init_connection()
+                    if client:
+                        try:
+                            sh = client.open("KKKB_250711"); worksheet = sh.worksheet("INPUT")
+                            tanggal = datetime.datetime.now(pytz.timezone('Asia/Jakarta')).strftime("%Y-%m-%d")
+                            worksheet.append_row([tanggal, analisa_jam, "Icumsa", brix_icumsa, abs_icumsa, icumsa_res])
+                            st.success(f"Data Icumsa jam {analisa_jam} Berhasil Disimpan! ✅")
+                        except Exception as e: st.error(f"Gagal: {e}")
+            with cy:
+                st.markdown(f'<div class="card-result" style="border-color:#00d4ff; background:rgba(0,212,255,0.1); padding:50px;"><h1 style="color:#00d4ff; font-size:60px; font-family:Orbitron; margin:0;">{icumsa_res:.2f}</h1><p style="color:white; margin:0;">IU (ICUMSA UNIT)</p></div>', unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True)
 
     st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("🔙 KEMBALI KE MENU PILIHAN", use_container_width=True):
+    if st.button("🔙 KEMBALI KE MENU PILIHAN", key="back_sub", use_container_width=True):
         st.session_state.page = 'pilih_analisa'; st.rerun()
