@@ -13,13 +13,13 @@ if 'page' not in st.session_state:
 if 'analisa_type' not in st.session_state:
     st.session_state.analisa_type = None
 
-# Tambahan State untuk Angka Pengawasan (KPI)
+# State untuk Angka Pengawasan (KPI)
 if 'kpi_data' not in st.session_state:
     st.session_state.kpi_data = {
         "OR": 85.10, "ME": 96.05, "BHR": 88.50, "HPB 1": 76.20, "PSHK": 72.50, "KNT": 12.10
     }
 
-# Standar Normatif Pabrik (Bisa disesuaikan nanti)
+# Standar Normatif Pabrik
 STANDAR = {
     "OR": 86.00, "ME": 96.20, "BHR": 90.00, "HPB 1": 78.00, "PSHK": 75.00, "KNT": 12.50
 }
@@ -109,8 +109,6 @@ if st.session_state.page == 'dashboard':
 
 elif st.session_state.page == 'kpi_monitoring':
     st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>📊 MANAGEMENT COCKPIT</h2>", unsafe_allow_html=True)
-    
-    # Grid KPI
     cols = st.columns(6)
     for i, (kpi, val) in enumerate(st.session_state.kpi_data.items()):
         target = STANDAR.get(kpi, 0)
@@ -123,10 +121,7 @@ elif st.session_state.page == 'kpi_monitoring':
                     <p style="color: #888; font-size: 10px;">Std: {target}%</p>
                 </div>
             """, unsafe_allow_html=True)
-
     st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Area Navigasi Tindakan
     st.markdown('<div style="background: rgba(38, 196, 185, 0.1); padding: 25px; border-radius: 20px; border: 1px solid #26c4b9;">', unsafe_allow_html=True)
     st.subheader("🕵️ Navigasi & Saran Operasional")
     if st.session_state.kpi_data["ME"] < STANDAR["ME"]:
@@ -136,8 +131,6 @@ elif st.session_state.page == 'kpi_monitoring':
     if st.session_state.kpi_data["BHR"] >= STANDAR["BHR"]:
         st.success("✅ **BHR STABIL**: Proses penguapan dan masakan berjalan efisien.")
     st.markdown('</div>', unsafe_allow_html=True)
-
-    # Grafik Tren
     st.markdown("<br>", unsafe_allow_html=True)
     st.subheader("📉 Tren Recovery Shift Berjalan")
     trend_df = pd.DataFrame({
@@ -146,7 +139,6 @@ elif st.session_state.page == 'kpi_monitoring':
         "Target": [86.0, 86.0, 86.0, 86.0, 86.0]
     }).set_index("Jam")
     st.line_chart(trend_df)
-
     if st.button("🔙 KEMBALI KE DASHBOARD", use_container_width=True):
         st.session_state.page = 'dashboard'; st.rerun()
 
@@ -162,7 +154,6 @@ elif st.session_state.page == 'pilih_stasiun':
     with r1c3:
         st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>🔥</h1></div>", unsafe_allow_html=True)
         if st.button("STASIUN PENGUAPAN", use_container_width=True): st.toast("Coming Soon")
-
     r2c1, r2c2, r2c3 = st.columns(3)
     with r2c1:
         st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>🍳</h1></div>", unsafe_allow_html=True)
@@ -173,7 +164,6 @@ elif st.session_state.page == 'pilih_stasiun':
     with r2c3:
         st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>📦</h1></div>", unsafe_allow_html=True)
         if st.button("STASIUN PENGEMASAN", use_container_width=True): st.toast("Coming Soon")
-    
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🔙 KEMBALI KE DASHBOARD", use_container_width=True): st.session_state.page = 'dashboard'; st.rerun()
 
@@ -212,8 +202,13 @@ elif st.session_state.page == 'input_gilingan':
         with c2:
             st.markdown(f'<div style="background:rgba(255,75,75,0.1); padding:40px; border-radius:20px; border:3px solid #ff4b4b; display:flex; justify-content:space-between; align-items:center;"><h1 style="color:#ff4b4b; font-family:Orbitron; margin:0; font-size:80px;">{hasil_dex:.4f}</h1><p style="color:white; font-weight:bold; letter-spacing:2px;">PPM DEXTRAN</p></div>', unsafe_allow_html=True)
 
-    def render_input_lengkap(prefix, list_opsi):
-        sub = st.selectbox(f"Pilih Analisa {prefix}", list_opsi, key=f"sel_{prefix}")
+    def render_input_lengkap(prefix, list_opsi, force_direct=False):
+        # UPDATE: Logika Force Direct untuk Gilingan 2-4
+        if not force_direct:
+            sub = st.selectbox(f"Pilih Analisa {prefix}", list_opsi, key=f"sel_{prefix}")
+        else:
+            sub = "(Brix, Pol, dan HK)"
+            
         st.markdown('<div class="hero-container" style="display:block; padding: 30px;">', unsafe_allow_html=True)
         bx_fix, bj = render_logic_brix_pol(prefix)
         if sub == "(Dextran)":
@@ -229,9 +224,10 @@ elif st.session_state.page == 'input_gilingan':
     menu_nm_lengkap = menu_neraca + ["(TSAS)"]
 
     with tabs[0]: render_input_lengkap("NPP", menu_neraca)
-    with tabs[1]: render_input_lengkap("Gilingan 2", ["(Brix, Pol, dan HK)"])
-    with tabs[2]: render_input_lengkap("Gilingan 3", ["(Brix, Pol, dan HK)"])
-    with tabs[3]: render_input_lengkap("Gilingan 4", ["(Brix, Pol, dan HK)"])
+    # UPDATE: Gilingan 2, 3, 4 Langsung tanpa dropdown
+    with tabs[1]: render_input_lengkap("Gilingan 2", [], force_direct=True)
+    with tabs[2]: render_input_lengkap("Gilingan 3", [], force_direct=True)
+    with tabs[3]: render_input_lengkap("Gilingan 4", [], force_direct=True)
     with tabs[4]: render_input_lengkap("Nira Mentah", menu_nm_lengkap)
     
     st.markdown("<br>", unsafe_allow_html=True)
@@ -293,10 +289,12 @@ elif st.session_state.page == 'analisa_lab':
         with cy: st.markdown(f'<div style="background:rgba(255,204,0,0.1); padding:40px; border-radius:20px; border:3px solid #ffcc00; display:flex; justify-content:space-between; align-items:center;"><h1 style="color:#ffcc00; font-family:Orbitron; margin:0; font-size:80px;">{tsai:.3f}</h1><p style="color:white; font-weight:bold; letter-spacing:2px;">% TSAI</p></div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
     elif st.session_state.analisa_type == 'icumsa':
+        # UPDATE: Menambahkan Jam Analisa di ICUMSA Gula
         st.markdown("<h2 style='text-align:center; color:#00d4ff; font-family:Orbitron;'>💎 ICUMSA GULA</h2>", unsafe_allow_html=True)
         st.markdown('<div class="hero-container" style="display:block; padding:30px;">', unsafe_allow_html=True)
         cx, cy = st.columns([1, 2.2])
         with cx:
+            jam = st.selectbox("Pilih Jam Analisa", options=list_jam) # Fitur Jam Ditambahkan
             abs_ic = st.number_input("Absorbansi", value=0.149); bx_ic = st.number_input("Brix Gula", value=49.44)
             bj_ic = hitung_interpolasi(bx_ic, data_bj); res = (abs_ic * 100000) / (bx_ic * 1 * bj_ic) if bx_ic > 0 else 0
         with cy: st.markdown(f'<div style="background:rgba(0,212,255,0.1); padding:40px; border-radius:20px; border:3px solid #00d4ff; display:flex; justify-content:space-between; align-items:center;"><h1 style="color:#00d4ff; font-family:Orbitron; margin:0; font-size:80px;">{res:.2f}</h1><p style="color:white; font-weight:bold; letter-spacing:2px;">IU (ICUMSA)</p></div>', unsafe_allow_html=True)
