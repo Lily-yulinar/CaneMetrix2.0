@@ -3,8 +3,6 @@ import datetime
 import pytz
 import base64
 import os
-import gspread
-from google.oauth2.service_account import Credentials
 
 # --- 1. CONFIG & STATE ---
 st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
@@ -21,6 +19,7 @@ def get_base64_logo(file_name):
             return base64.b64encode(f.read()).decode()
     return ""
 
+# Note: Pastikan file gambar ini ada di folder yang sama atau ganti path-nya
 logo_ptpn = get_base64_logo("ptpn.png"); logo_sgn = get_base64_logo("sgn.png")
 logo_lpp = get_base64_logo("lpp.png"); logo_kb = get_base64_logo("kb.png")
 logo_cane = get_base64_logo("canemetrix.png")
@@ -42,9 +41,8 @@ def hitung_interpolasi(nilai_user, dataset):
             return y0 + (nilai_user - x0) * (y1 - y0) / (x1 - x0)
     return 1.0
 
-# --- 4. UI COMPONENTS ---
+# --- 4. UI COMPONENTS (VERSI RAKSASA VERTIKAL) ---
 def tampilkan_kartu_hasil(brix, pol, hk):
-    # CSS KHUSUS UNTUK KOTAK HASIL SESUAI FOTO USER (FULL WIDTH)
     st.markdown(f"""
     <div style="display: flex; flex-direction: column; gap: 15px;">
         <div style="background: rgba(38, 196, 185, 0.1); padding: 30px; border-radius: 20px; border: 3px solid #26c4b9; display: flex; justify-content: space-between; align-items: center;">
@@ -100,8 +98,6 @@ if st.session_state.page == 'dashboard':
 
 elif st.session_state.page == 'pilih_stasiun':
     st.markdown("<h2 style='text-align:center; color:white; font-family:Orbitron;'>PILIH STASIUN</h2>", unsafe_allow_html=True)
-    
-    # GRID STASIUN LENGKAP
     r1c1, r1c2, r1c3 = st.columns(3)
     with r1c1:
         st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>🚜</h1></div>", unsafe_allow_html=True)
@@ -175,12 +171,15 @@ elif st.session_state.page == 'input_gilingan':
             st.metric("Hasil Gula Reduksi", f"{(v_b - v_p) * 6.357:.2f}")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    menu_std = ["(Brix, Pol, dan HK)", "(Gula Reduksi)", "(Kadar Posfat)", "(Dextran)", "(Icumsa)"]
-    with tabs[0]: render_input_lengkap("NPP", menu_std)
+    # --- UPDATE: ISTILAH NERACA WARNA ---
+    menu_neraca = ["(Brix, Pol, dan HK)", "(Gula Reduksi)", "(Kadar Posfat)", "(Dextran)", "(Neraca Warna)"]
+    menu_nm_lengkap = menu_neraca + ["(TSAS)"]
+
+    with tabs[0]: render_input_lengkap("NPP", menu_neraca)
     with tabs[1]: render_input_lengkap("Gilingan 2", ["(Brix, Pol, dan HK)"])
     with tabs[2]: render_input_lengkap("Gilingan 3", ["(Brix, Pol, dan HK)"])
     with tabs[3]: render_input_lengkap("Gilingan 4", ["(Brix, Pol, dan HK)"])
-    with tabs[4]: render_input_lengkap("Nira Mentah", menu_std + ["(TSAS)"])
+    with tabs[4]: render_input_lengkap("Nira Mentah", menu_nm_lengkap)
     
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🔙 KEMBALI KE PILIH STASIUN", use_container_width=True): st.session_state.page = 'pilih_stasiun'; st.rerun()
