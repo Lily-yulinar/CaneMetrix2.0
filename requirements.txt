@@ -3,3 +3,5 @@ pytz
 streamlit-autorefresh
 gspread
 google-auth
+plotly
+pandas
