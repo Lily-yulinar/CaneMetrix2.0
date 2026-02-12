@@ -136,6 +136,8 @@ elif st.session_state.page == 'pilih_stasiun':
     if st.button("🔙 KEMBALI KE DASHBOARD", use_container_width=True):
         st.session_state.page = 'dashboard'; st.rerun()
 
+# --- 6. LOGIKA HALAMAN (BAGIAN INPUT GILINGAN) ---
+
 # === HALAMAN INPUT GILINGAN (LOGIC UPGRADED) ===
 elif st.session_state.page == 'input_gilingan':
     st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>🚜 INPUT DATA STASIUN GILINGAN</h2>", unsafe_allow_html=True)
@@ -145,70 +147,72 @@ elif st.session_state.page == 'input_gilingan':
         "Nira Mentah", "Ampas", "Imbibisi", "Putaran & Tekanan"
     ])
 
-    # FUNGSI UNTUK RENDER SUB-MENU DAN CARD (SESUAI GAMBAR 2)
-    def render_input_nira(prefix, list_opsi):
-        # SUB MENU
+    # --- FUNGSI INTERNAL KHUSUS HALAMAN INI ---
+    
+    # 1. Fungsi Logic Perhitungan (Biar seragam)
+    def render_logic_brix_pol(prefix):
+        c_input, c_hasil = st.columns([1, 2])
+        with c_input:
+            st.caption(f"Input Data {prefix}")
+            bx_in = st.number_input("Brix Baca", value=0.0, key=f"bx_{prefix}", format="%.2f")
+            sh_in = st.number_input("Suhu (°C)", value=28.0, key=f"sh_{prefix}", format="%.1f")
+            pol_in = st.number_input("Pol Baca", value=0.0, key=f"pol_{prefix}", format="%.2f")
+            
+            kor = hitung_interpolasi(sh_in, data_koreksi)
+            bj = hitung_interpolasi(bx_in, data_bj)
+            bx_fix = (bx_in + kor) if bx_in > 0 else 0
+            pol_fix = (0.286 * pol_in) / bj if bj > 0 else 0
+            hk_fix = (pol_fix / bx_fix * 100) if bx_fix > 0 else 0
+            st.info(f"Koreksi: {kor:+.3f} | BJ: {bj:.4f}")
+
+        with c_hasil:
+            tampilkan_kartu_hasil(bx_fix, pol_fix, hk_fix)
+            if st.button(f"🚀 SIMPAN DATA {prefix}", key=f"btn_{prefix}"):
+                st.toast(f"Data {prefix} Berhasil Disimpan!")
+
+    # 2. Fungsi untuk Tab yang butuh Dropdown (NPP & NM)
+    def render_input_lengkap(prefix, list_opsi):
         sub = st.selectbox(f"Pilih Analisa {prefix}", list_opsi, key=f"sel_{prefix}")
         st.markdown('<div class="hero-container" style="display:block; padding: 30px;">', unsafe_allow_html=True)
         
         if sub == "(Brix, Pol, dan HK)":
-            c_input, c_hasil = st.columns([1, 2])
-            with c_input:
-                st.caption(f"Input Data {prefix}")
-                bx_in = st.number_input("Brix Baca", value=0.0, key=f"bx_{prefix}")
-                sh_in = st.number_input("Suhu (°C)", value=28.0, key=f"sh_{prefix}")
-                pol_in = st.number_input("Pol Baca", value=0.0, key=f"pol_{prefix}")
-                
-                kor = hitung_interpolasi(sh_in, data_koreksi)
-                bj = hitung_interpolasi(bx_in, data_bj)
-                bx_fix = (bx_in + kor) if bx_in > 0 else 0
-                pol_fix = (0.286 * pol_in) / bj if bj > 0 else 0
-                hk_fix = (pol_fix / bx_fix * 100) if bx_fix > 0 else 0
-                st.info(f"Koreksi: {kor:+.3f} | BJ: {bj:.4f}")
-
-            with c_hasil:
-                tampilkan_kartu_hasil(bx_fix, pol_fix, hk_fix)
-                if st.button(f"🚀 SIMPAN DATA {prefix}", key=f"btn_{prefix}"):
-                    st.toast(f"Data {prefix} Berhasil Disimpan!")
-
+            render_logic_brix_pol(prefix)
         elif sub == "(Gula Reduksi)":
             c1, c2 = st.columns(2)
             v_b = c1.number_input("Volume Blanko (ml)", value=0.0, key=f"vb_{prefix}")
             v_p = c2.number_input("Volume Penitran (ml)", value=0.0, key=f"vp_{prefix}")
             gr = (v_b - v_p) * 0.1 * 63.57
             st.metric("Hasil Gula Reduksi", f"{gr:.2f}")
-
         elif sub == "(Kadar Posfat)":
             p2o5 = st.number_input("P2O5 (ppm)", value=0.0, key=f"p2_{prefix}")
             st.write(f"Kadar Posfat Terdeteksi: {p2o5} ppm")
-
         elif sub == "(Dextran)":
             dex = st.number_input("Dextran (ppm)", value=0.0, key=f"dx_{prefix}")
             st.write(f"Kadar Dextran Terdeteksi: {dex} ppm")
-
         elif sub == "(Icumsa)":
-            st.caption("Analisa Warna Icumsa Nira")
             abs_ic = st.number_input("Absorbansi", value=0.0, key=f"abs_{prefix}")
             st.info("Rumus perhitungan Icumsa sedang disinkronkan.")
-
         elif sub == "(TSAS)":
             tsas = st.number_input("TSAS", value=0.0, key=f"ts_{prefix}")
             st.write(f"Nilai TSAS: {tsas}")
-            
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # List menu standar
+    # 3. Fungsi untuk Tab yang mau Langsung Muncul (G2, G3, G4)
+    def render_input_simpel(prefix):
+        st.markdown(f"### Analisa {prefix} Dasar")
+        st.markdown('<div class="hero-container" style="display:block; padding: 30px;">', unsafe_allow_html=True)
+        render_logic_brix_pol(prefix)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # --- EKSEKUSI TAB ---
     menu_std = ["(Brix, Pol, dan HK)", "(Gula Reduksi)", "(Kadar Posfat)", "(Dextran)", "(Icumsa)"]
     menu_nm = menu_std + ["(TSAS)"]
 
-    # Implementasi ke masing-masing Tab
-    with tabs[0]: render_input_nira("NPP", menu_std)
-    with tabs[1]: render_input_nira("Gilingan 2", menu_std)
-    with tabs[2]: render_input_nira("Gilingan 3", menu_std)
-    with tabs[3]: render_input_nira("Gilingan 4", menu_std)
-    with tabs[4]: render_input_nira("Nira Mentah", menu_nm)
-
-    # Tab sisanya (Ampas dll)
+    with tabs[0]: render_input_lengkap("NPP", menu_std)
+    with tabs[1]: render_input_simpel("Gilingan 2")
+    with tabs[2]: render_input_simpel("Gilingan 3")
+    with tabs[3]: render_input_simpel("Gilingan 4")
+    with tabs[4]: render_input_lengkap("Nira Mentah", menu_nm)
     with tabs[5]: st.info("Input Ampas")
     with tabs[6]: st.info("Input Imbibisi")
     with tabs[7]: st.info("Input Putaran Roll & Tekanan Hidraulik")
@@ -216,7 +220,6 @@ elif st.session_state.page == 'input_gilingan':
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🔙 KEMBALI KE PILIH STASIUN", use_container_width=True):
         st.session_state.page = 'pilih_stasiun'; st.rerun()
-
 # === HALAMAN PILIH ANALISA (AMAN) ===
 elif st.session_state.page == 'pilih_analisa':
     st.markdown("<h2 style='text-align:center; color:white; font-family:Orbitron;'>PILIH JENIS ANALISA</h2>", unsafe_allow_html=True)
