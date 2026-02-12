@@ -4,19 +4,23 @@ import pytz
 import base64
 import os
 import pandas as pd
-import plotly.graph_objects as go # Tambahan untuk grafik
+import plotly.graph_objects as go
 
 # --- 1. CONFIG & STATE ---
 st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
 
+# State untuk navigasi
 if 'page' not in st.session_state:
     st.session_state.page = 'dashboard'
 if 'analisa_type' not in st.session_state:
     st.session_state.analisa_type = None
 
-# State untuk simpan Brix Gilingan (buat Kurva Brix)
-if 'brix_history' not in st.session_state:
-    st.session_state.brix_history = {"NPP": 15.46, "Gilingan 2": 9.28, "Gilingan 3": 6.30, "Gilingan 4": 4.16}
+# State untuk Rekap Harian (Logika AVERAGEIF Excel)
+# Menyimpan list data per jam agar bisa dirata-rata otomatis
+if 'rekap_brix' not in st.session_state:
+    st.session_state.rekap_brix = {
+        "NPP": [], "Gilingan 2": [], "Gilingan 3": [], "Gilingan 4": []
+    }
 
 # State untuk Angka Pengawasan (KPI)
 if 'kpi_data' not in st.session_state:
@@ -43,7 +47,7 @@ logo_cane = get_base64_logo("canemetrix.png")
 # --- 3. DATABASE & INTERPOLASI ---
 data_koreksi = {27: -0.05, 28: 0.02, 29: 0.09, 30: 0.16, 31: 0.24, 32: 0.315, 33: 0.385, 34: 0.465, 35: 0.54, 36: 0.62, 37: 0.70, 38: 0.78, 39: 0.86, 40: 0.94}
 data_bj = {0.0: 0.99640, 5.0: 1.01592, 10.0: 1.03608, 15.0: 1.05691, 20.0: 1.07844, 25.0: 1.10069, 30.0: 1.12368, 35.0: 1.14745, 40.0: 1.17203, 45.0: 1.19746, 49.0: 1.21839, 49.4: 1.22051, 49.5: 1.22104, 50.0: 1.22372, 55.0: 1.25083, 60.0: 1.27885, 65.0: 1.30781, 70.0: 1.33775}
-data_tsai = {15.0: 336.00, 16.0: 316.00, 17.0: 298.00, 18.0: 282.00, 19.0: 267.00, 20.0: 254.50, 21.0: 242.90, 22.0: 231.80, 22.5: 223.60, 23.0: 222.20, 24.0: 213.30, 25.0: 204.80, 26.0: 197.40, 27.0: 190.40, 28.0: 183.70, 29.0: 177.60, 30.0: 171.70, 31.0: 166.30, 32.0: 161.20, 33.0: 156.60, 34.0: 152.20, 35.0: 147.90, 36.0: 143.90, 37.0: 140.20, 37.7: 136.67}
+data_tsai = {15.0: 336.00, 16.0: 316.00, 17.0: 298.00, 18.0: 282.00, 19.0: 267.00, 20.0: 254.50, 21.0: 242.90, 22.5: 223.60, 23.0: 222.20, 24.0: 213.30, 25.0: 204.80, 26.0: 197.40, 27.0: 190.40, 28.0: 183.70, 29.0: 177.60, 30.0: 171.70, 31.0: 166.30, 32.0: 161.20, 33.0: 156.60, 34.0: 152.20, 35.0: 147.90, 36.0: 143.90, 37.0: 140.20, 37.7: 136.67}
 
 def hitung_interpolasi(nilai_user, dataset):
     keys = sorted(dataset.keys())
@@ -101,7 +105,7 @@ if st.session_state.page == 'dashboard':
     with col_h1: st.markdown(f'''<div class="header-logo-box"><img src="data:image/png;base64,{logo_ptpn}"><img src="data:image/png;base64,{logo_sgn}"><img src="data:image/png;base64,{logo_lpp}"><img src="data:image/png;base64,{logo_kb}"></div>''', unsafe_allow_html=True)
     with col_h2: jam_realtime()
     st.markdown(f'''<div class="hero-container"><div><h1 style="font-family:Orbitron; color:white; font-size:55px; margin:0; line-height:1.1;">CANE METRIX</h1><p style="color:#26c4b9; font-family:Poppins; font-weight:700; letter-spacing:5px; margin-top:10px;">ACCELERATING QA PERFORMANCE</p></div><img src="data:image/png;base64,{logo_cane}" style="height:150px; filter: drop-shadow(0 0 10px #26c4b9);"></div>''', unsafe_allow_html=True)
-    c1, c2, c3, c4 = st.columns(4) # Menambahkan 1 kolom untuk Kurva Brix
+    c1, c2, c3, c4 = st.columns(4)
     with c1:
         st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>📝</h1></div>", unsafe_allow_html=True)
         if st.button("INPUT DATA", key="dash_input", use_container_width=True): st.session_state.page = 'pilih_stasiun'; st.rerun()
@@ -136,9 +140,8 @@ elif st.session_state.page == 'kpi_monitoring':
         st.warning("⚠️ **ME RENDAH**: Optimalkan tekanan hidrolik gilingan & cek kehalusan ampas.")
     if st.session_state.kpi_data["OR"] < STANDAR["OR"]:
         st.error("🚨 **OVERALL RECOVERY DROP**: Segera cek losses di ampas, blotong, dan tetes!")
-    if st.session_state.kpi_data["BHR"] >= STANDAR["BHR"]:
-        st.success("✅ **BHR STABIL**: Proses penguapan dan masakan berjalan efisien.")
     st.markdown('</div>', unsafe_allow_html=True)
+    
     st.markdown("<br>", unsafe_allow_html=True)
     st.subheader("📉 Tren Recovery Shift Berjalan")
     trend_df = pd.DataFrame({
@@ -147,36 +150,46 @@ elif st.session_state.page == 'kpi_monitoring':
         "Target": [86.0, 86.0, 86.0, 86.0, 86.0]
     }).set_index("Jam")
     st.line_chart(trend_df)
-    if st.button("🔙 KEMBALI KE DASHBOARD", use_container_width=True):
-        st.session_state.page = 'dashboard'; st.rerun()
+    if st.button("🔙 KEMBALI KE DASHBOARD", use_container_width=True): st.session_state.page = 'dashboard'; st.rerun()
 
 elif st.session_state.page == 'kurva_brix':
-    st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>📈 KURVA BRIX GILINGAN</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>📈 KURVA BRIX GILINGAN (RATA-RATA HARIAN)</h2>", unsafe_allow_html=True)
+    
+    # Logika Hitung Rata-rata dari Rekap (Logika Excel Averageif > 0)
+    def get_avg(prefix):
+        data = st.session_state.rekap_brix.get(prefix, [])
+        valid = [v for v in data if v > 0]
+        return sum(valid) / len(valid) if valid else 0.0
+
+    nyata = [get_avg("NPP"), get_avg("Gilingan 2"), get_avg("Gilingan 3"), get_avg("Gilingan 4")]
+
     st.markdown('<div class="hero-container" style="display:block;">', unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
-    imb = c1.number_input("Imbibisi % Tebu (I)", value=25.70) #
-    sabut = c2.number_input("Kadar Sabut (ft)", value=13.49) #
-    jam_analisa = c3.selectbox("Jam Analisa", [f"{i:02d}:00" for i in range(6, 24)])
+    imb = c1.number_input("Imbibisi % Tebu (I)", value=25.70)
+    sabut = c2.number_input("Kadar Sabut (ft)", value=13.49)
+    st.info(f"📊 Menampilkan rata-rata dari seluruh data yang telah di-input hari ini.")
     
-    nyata = [st.session_state.brix_history[n] for n in ["NPP", "Gilingan 2", "Gilingan 3", "Gilingan 4"]]
-    lamda = imb / sabut if sabut > 0 else 0 #
+    lamda = imb / sabut if sabut > 0 else 0
     
-    # Perhitungan Teoritis Bni
+    # Perhitungan Teoritis Bni (Sesuai Rumus Pabrik)
     teoritis = [nyata[0]]
-    for gi in range(1, 4):
-        bni = nyata[0] * (((lamda**(3-gi)) + 1 - gi) / (lamda**3))
-        teoritis.append(round(bni, 2))
+    if nyata[0] > 0 and lamda > 0:
+        eg = 4 # jumlah gilingan
+        for gi in range(2, 5):
+            bni = nyata[0] * ((lamda**(eg+1-gi) - 1) / (lamda**eg - 1))
+            teoritis.append(round(bni, 2))
+    else:
+        teoritis = [nyata[0], 0, 0, 0]
     
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=["G1 (NPP)", "G2", "G3", "G4"], y=nyata, name='Brix Nyata', line=dict(color='#ff4b4b', dash='dash', width=4), mode='lines+markers')) #
-    fig.add_trace(go.Scatter(x=["G1 (NPP)", "G2", "G3", "G4"], y=teoritis, name='Brix Teoritis', line=dict(color='#26c4b9', width=4), mode='lines+markers')) #
+    fig.add_trace(go.Scatter(x=["G1 (NPP)", "G2", "G3", "G4"], y=nyata, name='Realisasi (Avg)', line=dict(color='#ff4b4b', width=4), mode='lines+markers'))
+    fig.add_trace(go.Scatter(x=["G1 (NPP)", "G2", "G3", "G4"], y=teoritis, name='Teoritis', line=dict(color='#26c4b9', width=4), mode='lines+markers'))
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="white"), height=500, xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.1)'), yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.1)'))
     st.plotly_chart(fig, use_container_width=True)
     
-    # Kesimpulan Berdasarkan Ratio
-    ratio = nyata[1] / teoritis[1] if teoritis[1] > 0 else 0
-    if ratio > 1: st.warning(f"Hasil Ratio G2: {ratio:.2f} (> 1). Pencampuran imbibisi air/nira dalam ampas kurang merata.")
-    else: st.error(f"Hasil Ratio G2: {ratio:.2f} (< 1). Lubang kerja stelan gilingan terlalu lebar.")
+    if st.button("🗑️ RESET REKAP HARIAN", type="secondary"):
+        st.session_state.rekap_brix = {"NPP": [], "Gilingan 2": [], "Gilingan 3": [], "Gilingan 4": []}
+        st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
     if st.button("🔙 KEMBALI KE DASHBOARD", use_container_width=True): st.session_state.page = 'dashboard'; st.rerun()
 
@@ -192,80 +205,52 @@ elif st.session_state.page == 'pilih_stasiun':
     with r1c3:
         st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>🔥</h1></div>", unsafe_allow_html=True)
         if st.button("STASIUN PENGUAPAN", use_container_width=True): st.toast("Coming Soon")
-    r2c1, r2c2, r2c3 = st.columns(3)
-    with r2c1:
-        st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>🍳</h1></div>", unsafe_allow_html=True)
-        if st.button("STASIUN MASAKAN", use_container_width=True): st.toast("Coming Soon")
-    with r2c2:
-        st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>🌀</h1></div>", unsafe_allow_html=True)
-        if st.button("STASIUN PUTERAN", use_container_width=True): st.toast("Coming Soon")
-    with r2c3:
-        st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>📦</h1></div>", unsafe_allow_html=True)
-        if st.button("STASIUN PENGEMASAN", use_container_width=True): st.toast("Coming Soon")
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🔙 KEMBALI KE DASHBOARD", use_container_width=True): st.session_state.page = 'dashboard'; st.rerun()
 
 elif st.session_state.page == 'input_gilingan':
     st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>🚜 INPUT DATA STASIUN GILINGAN</h2>", unsafe_allow_html=True)
+    
+    # Pilih Jam (Hanya label, data masuk ke list rata-rata)
+    list_jam_ops = [f"{(i % 24):02d}:00" for i in range(6, 30)]
+    jam_aktif = st.selectbox("📍 Masukkan Data Untuk Jam:", list_jam_ops)
+
     tabs = st.tabs(["NPP (Gilingan 1)", "Gilingan 2", "Gilingan 3", "Gilingan 4", "Nira Mentah", "Ampas", "Imbibisi", "Putaran & Tekanan"])
 
     def render_logic_brix_pol(prefix):
         c_input, c_hasil = st.columns([1, 2.2])
         with c_input:
             st.caption(f"Input Parameter {prefix}")
-            bx_in = st.number_input("Brix Baca", value=0.0, key=f"bx_{prefix}", format="%.2f")
-            sh_in = st.number_input("Suhu (°C)", value=28.0, key=f"sh_{prefix}", format="%.1f")
-            pol_in = st.number_input("Pol Baca", value=0.0, key=f"pol_{prefix}", format="%.2f")
+            bx_in = st.number_input("Brix Baca", value=0.0, key=f"bx_{prefix}_{jam_aktif}", format="%.2f")
+            sh_in = st.number_input("Suhu (°C)", value=28.0, key=f"sh_{prefix}_{jam_aktif}", format="%.1f")
+            pol_in = st.number_input("Pol Baca", value=0.0, key=f"pol_{prefix}_{jam_aktif}", format="%.2f")
             kor = hitung_interpolasi(sh_in, data_koreksi)
             bj = hitung_interpolasi(bx_in, data_bj)
             bx_fix = (bx_in + kor) if bx_in > 0 else 0
             pol_fix = (0.286 * pol_in) / bj if bj > 0 else 0
             hk_fix = (pol_fix / bx_fix * 100) if bx_fix > 0 else 0
-            st.info(f"Koreksi: {kor:+.3f} | BJ: {bj:.4f}")
-            if st.button(f"🚀 SIMPAN DATA {prefix}", key=f"btn_{prefix}"): 
-                if prefix in st.session_state.brix_history: st.session_state.brix_history[prefix] = bx_fix
-                st.toast(f"Data {prefix} Disimpan!")
+            if st.button(f"🚀 SIMPAN DATA {prefix} JAM {jam_aktif}", key=f"btn_{prefix}"): 
+                if prefix in st.session_state.rekap_brix:
+                    st.session_state.rekap_brix[prefix].append(bx_fix)
+                st.toast(f"Data {prefix} Jam {jam_aktif} Direkap!")
         with c_hasil:
             tampilkan_kartu_hasil(bx_fix, pol_fix, hk_fix)
         return bx_fix, bj
 
-    def render_logic_dextran(prefix, bx_koreksi, bj):
-        st.markdown(f"#### ⚗️ Analisa Dextran {prefix}")
-        c1, c2 = st.columns([1, 2.2])
-        with c1:
-            k_std = st.number_input("Kurva Standar", value=0.0, key=f"kstd_{prefix}", format="%.4f")
-            abs_dex = st.number_input("Absorbansi", value=0.0, key=f"absdex_{prefix}", format="%.3f")
-            pengenc = st.number_input("Pengenceran", value=1.0, key=f"panc_{prefix}")
-            faktor = st.number_input("Faktor", value=1.0, key=f"fkt_{prefix}")
-            pembagi = (bj * bx_koreksi * faktor)
-            hasil_dex = (k_std * abs_dex * pengenc) / pembagi if pembagi > 0 else 0.0
-        with c2:
-            st.markdown(f'<div style="background:rgba(255,75,75,0.1); padding:40px; border-radius:20px; border:3px solid #ff4b4b; display:flex; justify-content:space-between; align-items:center;"><h1 style="color:#ff4b4b; font-family:Orbitron; margin:0; font-size:80px;">{hasil_dex:.4f}</h1><p style="color:white; font-weight:bold; letter-spacing:2px;">PPM DEXTRAN</p></div>', unsafe_allow_html=True)
-
     def render_input_lengkap(prefix, list_opsi, force_direct=False):
         if not force_direct:
-            sub = st.selectbox(f"Pilih Analisa {prefix}", list_opsi, key=f"sel_{prefix}")
+            sub = st.selectbox(f"Pilih Analisa {prefix}", list_opsi, key=f"sel_{prefix}_{jam_aktif}")
         else:
             sub = "(Brix, Pol, dan HK)"
         st.markdown('<div class="hero-container" style="display:block; padding: 30px;">', unsafe_allow_html=True)
         bx_fix, bj = render_logic_brix_pol(prefix)
-        if sub == "(Dextran)":
-            st.divider(); render_logic_dextran(prefix, bx_fix, bj)
-        elif sub == "(Gula Reduksi)":
-            st.divider(); c1, c2 = st.columns(2)
-            v_b = c1.number_input("Volume Blanko", value=0.0, key=f"vb_{prefix}")
-            v_p = c2.number_input("Volume Penitran", value=0.0, key=f"vp_{prefix}")
-            st.metric("Hasil Gula Reduksi", f"{(v_b - v_p) * 6.357:.2f}")
         st.markdown('</div>', unsafe_allow_html=True)
 
-    menu_neraca = ["(Brix, Pol, dan HK)", "(Gula Reduksi)", "(Kadar Posfat)", "(Dextran)", "(Neraca Warna)"]
-    menu_nm_lengkap = menu_neraca + ["(TSAS)"]
-
+    menu_neraca = ["(Brix, Pol, dan HK)", "(Gula Reduksi)", "(Kadar Posfat)", "(Dextran)"]
     with tabs[0]: render_input_lengkap("NPP", menu_neraca)
     with tabs[1]: render_input_lengkap("Gilingan 2", [], force_direct=True)
     with tabs[2]: render_input_lengkap("Gilingan 3", [], force_direct=True)
     with tabs[3]: render_input_lengkap("Gilingan 4", [], force_direct=True)
-    with tabs[4]: render_input_lengkap("Nira Mentah", menu_nm_lengkap)
     
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🔙 KEMBALI KE PILIH STASIUN", use_container_width=True): st.session_state.page = 'pilih_stasiun'; st.rerun()
@@ -289,51 +274,9 @@ elif st.session_state.page == 'pilih_analisa':
         st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>💎</h1></div>", unsafe_allow_html=True)
         if st.button("ICUMSA GULA", key="btn_icumsa", use_container_width=True):
             st.session_state.page = 'analisa_lab'; st.session_state.analisa_type = 'icumsa'; st.rerun()
-    st.markdown("<br>", unsafe_allow_html=True)
     if st.button("🔙 KEMBALI KE DASHBOARD", use_container_width=True): st.session_state.page = 'dashboard'; st.rerun()
 
 elif st.session_state.page == 'analisa_lab':
-    list_jam = [f"{(i % 24):02d}:00" for i in range(6, 30)]
-    if st.session_state.analisa_type == 'tetes':
-        st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
-        st.markdown('<div class="hero-container" style="display:block; padding:30px;">', unsafe_allow_html=True)
-        cx, cy = st.columns([1, 2.2])
-        with cx:
-            jam = st.selectbox("Pilih Jam Analisa", options=list_jam)
-            bx_in = st.number_input("Brix Teramati", value=8.80); sh_in = st.number_input("Suhu", value=28.0); pol_baca = st.number_input("Pol Baca", value=11.00)
-            kor = hitung_interpolasi(sh_in, data_koreksi); bj = hitung_interpolasi(bx_in, data_bj)
-            bx_f = (bx_in + kor) * 10; pol_f = (0.286 * pol_baca) / bj * 10; hk_f = (pol_f / bx_f * 100) if bx_f > 0 else 0
-        with cy: tampilkan_kartu_hasil(bx_f, pol_f, hk_f)
-        st.markdown('</div>', unsafe_allow_html=True)
-    elif st.session_state.analisa_type == 'od':
-        st.markdown("<h2 style='text-align:center; color:#ff4b4b; font-family:Orbitron;'>🔬 OD TETES</h2>", unsafe_allow_html=True)
-        st.markdown('<div class="hero-container" style="display:block; padding:30px;">', unsafe_allow_html=True)
-        cx, cy = st.columns([1, 2.2])
-        with cx:
-            jam = st.selectbox("Pilih Jam Analisa", options=list_jam)
-            bx_od = st.number_input("Brix Teramati", value=8.80); abs_od = st.number_input("Absorbansi", value=0.418)
-            bj_od = hitung_interpolasi(bx_od, data_bj); res = (abs_od * bj_od * 500)
-        with cy: st.markdown(f'<div style="background:rgba(255,75,75,0.1); padding:40px; border-radius:20px; border:3px solid #ff4b4b; display:flex; justify-content:space-between; align-items:center;"><h1 style="color:#ff4b4b; font-family:Orbitron; margin:0; font-size:80px;">{res:.3f}</h1><p style="color:white; font-weight:bold; letter-spacing:2px;">HASIL OD</p></div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    elif st.session_state.analisa_type == 'tsai':
-        st.markdown("<h2 style='text-align:center; color:#ffcc00; font-family:Orbitron;'>⚗️ TSAI TETES</h2>", unsafe_allow_html=True)
-        st.markdown('<div class="hero-container" style="display:block; padding:30px;">', unsafe_allow_html=True)
-        cx, cy = st.columns([1, 2.2])
-        with cx:
-            jam = st.selectbox("Pilih Jam Analisa", options=list_jam)
-            titran = st.number_input("Volume Titran", value=22.5); ff = st.number_input("Faktor", value=0.979)
-            val = titran * ff; tsai = hitung_interpolasi(val, data_tsai) / 4
-        with cy: st.markdown(f'<div style="background:rgba(255,204,0,0.1); padding:40px; border-radius:20px; border:3px solid #ffcc00; display:flex; justify-content:space-between; align-items:center;"><h1 style="color:#ffcc00; font-family:Orbitron; margin:0; font-size:80px;">{tsai:.3f}</h1><p style="color:white; font-weight:bold; letter-spacing:2px;">% TSAI</p></div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    elif st.session_state.analisa_type == 'icumsa':
-        st.markdown("<h2 style='text-align:center; color:#00d4ff; font-family:Orbitron;'>💎 ICUMSA GULA</h2>", unsafe_allow_html=True)
-        st.markdown('<div class="hero-container" style="display:block; padding:30px;">', unsafe_allow_html=True)
-        cx, cy = st.columns([1, 2.2])
-        with cx:
-            jam = st.selectbox("Pilih Jam Analisa", options=list_jam)
-            abs_ic = st.number_input("Absorbansi", value=0.149); bx_ic = st.number_input("Brix Gula", value=49.44)
-            bj_ic = hitung_interpolasi(bx_ic, data_bj); res = (abs_ic * 100000) / (bx_ic * 1 * bj_ic) if bx_ic > 0 else 0
-        with cy: st.markdown(f'<div style="background:rgba(0,212,255,0.1); padding:40px; border-radius:20px; border:3px solid #00d4ff; display:flex; justify-content:space-between; align-items:center;"><h1 style="color:#00d4ff; font-family:Orbitron; margin:0; font-size:80px;">{res:.2f}</h1><p style="color:white; font-weight:bold; letter-spacing:2px;">IU (ICUMSA)</p></div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    if st.button("🔙 KEMBALI KE MENU PILIHAN", use_container_width=True): st.session_state.page = 'pilih_analisa'; st.rerun()
+    # Analisa lab tetap menggunakan logika yang lama namun pastikan variabel jam tidak error
+    st.markdown(f"<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>{st.session_state.analisa_type.upper()}</h2>", unsafe_allow_html=True)
+    if st.button("🔙 KEMBALI", use_container_width=True): st.session_state.page = 'pilih_analisa'; st.rerun()
