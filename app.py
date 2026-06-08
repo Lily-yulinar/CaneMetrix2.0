@@ -4,7 +4,9 @@ import pytz
 import base64
 import os
 import pandas as pd
-import plotly.graph_objects as go # Tambahan untuk grafik
+import plotly.graph_objects as go 
+import gspread
+from google.oauth2.service_account import Credentials
 
 # --- 1. CONFIG & STATE ---
 st.set_page_config(page_title="CaneMetrix 2.0", layout="wide")
@@ -29,7 +31,23 @@ STANDAR = {
     "OR": 86.00, "ME": 96.20, "BHR": 90.00, "HPB 1": 78.00, "PSHK": 75.00, "KNT": 12.50
 }
 
-# --- 2. ASSETS (LOGO) ---
+# --- 2. GOOGLE SHEETS CONNECTION AUTOMATION ---
+def koneksi_google_sheets():
+    try:
+        # Membaca credential dari TOML Secrets Streamlit Cloud lo beb
+        info_kunci = dict(st.secrets["gcp_service_account"])
+        scope = ["https://www.googleapis.com/auth/spreadsheets"]
+        kredensial = Credentials.from_service_account_info(info_kunci, scopes=scope)
+        klien = gspread.authorize(kredensial)
+        # Menembak tepat ke nama file salinan baru lo
+        return klien.open("Salinan Analisa Khusus SG10 2026")
+    except Exception as e:
+        return None
+
+# Panggil fungsi database google sheets
+spreadsheet = koneksi_google_sheets()
+
+# --- 3. ASSETS (LOGO) ---
 def get_base64_logo(file_name):
     if os.path.exists(file_name):
         with open(file_name, "rb") as f:
@@ -40,7 +58,7 @@ logo_ptpn = get_base64_logo("ptpn.png"); logo_sgn = get_base64_logo("sgn.png")
 logo_lpp = get_base64_logo("lpp.png"); logo_kb = get_base64_logo("kb.png")
 logo_cane = get_base64_logo("canemetrix.png")
 
-# --- 3. DATABASE & INTERPOLASI ---
+# --- 4. DATABASE & INTERPOLASI ---
 data_koreksi = {27: -0.05, 28: 0.02, 29: 0.09, 30: 0.16, 31: 0.24, 32: 0.315, 33: 0.385, 34: 0.465, 35: 0.54, 36: 0.62, 37: 0.70, 38: 0.78, 39: 0.86, 40: 0.94}
 data_bj = {0.0: 0.99640, 5.0: 1.01592, 10.0: 1.03608, 15.0: 1.05691, 20.0: 1.07844, 25.0: 1.10069, 30.0: 1.12368, 35.0: 1.14745, 40.0: 1.17203, 45.0: 1.19746, 49.0: 1.21839, 49.4: 1.22051, 49.5: 1.22104, 50.0: 1.22372, 55.0: 1.25083, 60.0: 1.27885, 65.0: 1.30781, 70.0: 1.33775}
 data_tsai = {15.0: 336.00, 16.0: 316.00, 17.0: 298.00, 18.0: 282.00, 19.0: 267.00, 20.0: 254.50, 21.0: 242.90, 22.0: 231.80, 22.5: 223.60, 23.0: 222.20, 24.0: 213.30, 25.0: 204.80, 26.0: 197.40, 27.0: 190.40, 28.0: 183.70, 29.0: 177.60, 30.0: 171.70, 31.0: 166.30, 32.0: 161.20, 33.0: 156.60, 34.0: 152.20, 35.0: 147.90, 36.0: 143.90, 37.0: 140.20, 37.7: 136.67}
@@ -57,7 +75,7 @@ def hitung_interpolasi(nilai_user, dataset):
             return y0 + (nilai_user - x0) * (y1 - y0) / (x1 - x0)
     return 1.0
 
-# --- 4. UI COMPONENTS ---
+# --- 5. UI COMPONENTS ---
 def tampilkan_kartu_hasil(brix, pol, hk):
     st.markdown(f"""
     <div style="display: flex; flex-direction: column; gap: 15px;">
@@ -76,7 +94,7 @@ def tampilkan_kartu_hasil(brix, pol, hk):
     </div>
     """, unsafe_allow_html=True)
 
-# --- 5. CSS ---
+# --- 6. CSS ---
 st.markdown(f"""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Poppins:wght@300;400;700&display=swap');
@@ -94,14 +112,18 @@ def jam_realtime():
     tz = pytz.timezone('Asia/Jakarta'); now = datetime.datetime.now(tz)
     st.markdown(f'''<div style="text-align: right; color: white; font-family: 'Poppins';">{now.strftime("%d %B %Y")}<br><span style="font-family:'Orbitron'; color:#26c4b9; font-size:24px; font-weight:bold;">{now.strftime("%H:%M:%S")} WIB</span></div>''', unsafe_allow_html=True)
 
-# --- 6. PAGE LOGIC ---
+# --- 7. PAGE LOGIC ---
 
 if st.session_state.page == 'dashboard':
     col_h1, col_h2 = st.columns([2, 1])
     with col_h1: st.markdown(f'''<div class="header-logo-box"><img src="data:image/png;base64,{logo_ptpn}"><img src="data:image/png;base64,{logo_sgn}"><img src="data:image/png;base64,{logo_lpp}"><img src="data:image/png;base64,{logo_kb}"></div>''', unsafe_allow_html=True)
     with col_h2: jam_realtime()
     st.markdown(f'''<div class="hero-container"><div><h1 style="font-family:Orbitron; color:white; font-size:55px; margin:0; line-height:1.1;">CANE METRIX</h1><p style="color:#26c4b9; font-family:Poppins; font-weight:700; letter-spacing:5px; margin-top:10px;">ACCELERATING QA PERFORMANCE</p></div><img src="data:image/png;base64,{logo_cane}" style="height:150px; filter: drop-shadow(0 0 10px #26c4b9);"></div>''', unsafe_allow_html=True)
-    c1, c2, c3, c4 = st.columns(4) # Menambahkan 1 kolom untuk Kurva Brix
+    
+    if spreadsheet is None:
+        st.error("⚠️ Peringatan: Aplikasi berjalan mode offline. Google Sheets belum terhubung. Cek Google Secrets lo beb!")
+        
+    c1, c2, c3, c4 = st.columns(4) 
     with c1:
         st.markdown("<div style='text-align:center; margin-bottom:-55px; position:relative; z-index:10; pointer-events:none;'><h1>📝</h1></div>", unsafe_allow_html=True)
         if st.button("INPUT DATA", key="dash_input", use_container_width=True): st.session_state.page = 'pilih_stasiun'; st.rerun()
@@ -154,12 +176,12 @@ elif st.session_state.page == 'kurva_brix':
     st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>📈 KURVA BRIX GILINGAN</h2>", unsafe_allow_html=True)
     st.markdown('<div class="hero-container" style="display:block;">', unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
-    imb = c1.number_input("Imbibisi % Tebu (I)", value=25.70) #
-    sabut = c2.number_input("Kadar Sabut (ft)", value=13.49) #
+    imb = c1.number_input("Imbibisi % Tebu (I)", value=25.70) 
+    sabut = c2.number_input("Kadar Sabut (ft)", value=13.49) 
     jam_analisa = c3.selectbox("Jam Analisa", [f"{i:02d}:00" for i in range(6, 24)])
     
     nyata = [st.session_state.brix_history[n] for n in ["NPP", "Gilingan 2", "Gilingan 3", "Gilingan 4"]]
-    lamda = imb / sabut if sabut > 0 else 0 #
+    lamda = imb / sabut if sabut > 0 else 0 
     
     # Perhitungan Teoritis Bni
     teoritis = [nyata[0]]
@@ -168,8 +190,8 @@ elif st.session_state.page == 'kurva_brix':
         teoritis.append(round(bni, 2))
     
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=["G1 (NPP)", "G2", "G3", "G4"], y=nyata, name='Brix Nyata', line=dict(color='#ff4b4b', dash='dash', width=4), mode='lines+markers')) #
-    fig.add_trace(go.Scatter(x=["G1 (NPP)", "G2", "G3", "G4"], y=teoritis, name='Brix Teoritis', line=dict(color='#26c4b9', width=4), mode='lines+markers')) #
+    fig.add_trace(go.Scatter(x=["G1 (NPP)", "G2", "G3", "G4"], y=nyata, name='Brix Nyata', line=dict(color='#ff4b4b', dash='dash', width=4), mode='lines+markers')) 
+    fig.add_trace(go.Scatter(x=["G1 (NPP)", "G2", "G3", "G4"], y=teoritis, name='Brix Teoritis', line=dict(color='#26c4b9', width=4), mode='lines+markers')) 
     fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="white"), height=500, xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.1)'), yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.1)'))
     st.plotly_chart(fig, use_container_width=True)
     
@@ -207,12 +229,25 @@ elif st.session_state.page == 'pilih_stasiun':
 
 elif st.session_state.page == 'input_gilingan':
     st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>🚜 INPUT DATA STASIUN GILINGAN</h2>", unsafe_allow_html=True)
+    
+    # Elemen Tambahan: Penentu Tanggal Tembak Excel agar Teratur
+    col_tgl1, col_tgl2 = st.columns([1, 2])
+    with col_tgl1:
+        tgl_operasi = st.date_input("Tanggal Operasi Gilingan:", datetime.date(2026, 6, 1), key="tgl_gilingan_sheet")
+        nama_sheet_target = tgl_operasi.strftime("%d%m") # Format "0106"
+        st.info(f"Target Sheet Excel: `{nama_sheet_target}`")
+
     tabs = st.tabs(["NPP (Gilingan 1)", "Gilingan 2", "Gilingan 3", "Gilingan 4", "Nira Mentah", "Ampas", "Imbibisi", "Putaran & Tekanan"])
 
     def render_logic_brix_pol(prefix):
         c_input, c_hasil = st.columns([1, 2.2])
         with c_input:
             st.caption(f"Input Parameter {prefix}")
+            
+            # Format Jam Pengamatan disesuaikan format Excel kolom A ("07.00")
+            list_jam_harian = [f"{i:02d}.00" for i in range(7, 24)] + [f"{i:02d}.00" for i in range(0, 7)]
+            jam_excel = st.selectbox("Jam Pengamatan:", list_jam_harian, key=f"jam_{prefix}")
+            
             bx_in = st.number_input("Brix Baca", value=0.0, key=f"bx_{prefix}", format="%.2f")
             sh_in = st.number_input("Suhu (°C)", value=28.0, key=f"sh_{prefix}", format="%.1f")
             pol_in = st.number_input("Pol Baca", value=0.0, key=f"pol_{prefix}", format="%.2f")
@@ -222,9 +257,35 @@ elif st.session_state.page == 'input_gilingan':
             pol_fix = (0.286 * pol_in) / bj if bj > 0 else 0
             hk_fix = (pol_fix / bx_fix * 100) if bx_fix > 0 else 0
             st.info(f"Koreksi: {kor:+.3f} | BJ: {bj:.4f}")
-            if st.button(f"🚀 SIMPAN DATA {prefix}", key=f"btn_{prefix}"): 
-                if prefix in st.session_state.brix_history: st.session_state.brix_history[prefix] = bx_fix
-                st.toast(f"Data {prefix} Disimpan!")
+            
+            if st.button(f"🚀 TEMBAK DATA {prefix}", key=f"btn_{prefix}"): 
+                # Simpan lokal state untuk kurva brix
+                if prefix in st.session_state.brix_history: 
+                    st.session_state.brix_history[prefix] = bx_fix
+                
+                # Prosedur Tembak Google Sheets Otomatis
+                if spreadsheet is not None:
+                    try:
+                        sheet_hari = spreadsheet.worksheet(nama_sheet_target)
+                        list_jam_excel = sheet_hari.col_values(1) # Ambil list jam di Kolom A
+                        
+                        if jam_excel in list_jam_excel:
+                            baris_jam = list_jam_excel.index(jam_excel) + 1
+                            
+                            # Tentukan Kolom Excel berdasarkan parameter stasiun
+                            if prefix == "NPP":
+                                sheet_hari.update_acell(f"B{baris_jam}", bx_fix) # % Sac NPP masuk B
+                            elif prefix == "Nira Mentah":
+                                sheet_hari.update_acell(f"C{baris_jam}", bx_fix) # % Sac NM masuk C
+                                
+                            st.success(f"Data {prefix} Jam {jam_excel} Sukses Masuk Excel!")
+                        else:
+                            st.error(f"Jam {jam_excel} tidak ditemukan di Kolom A Excel harian!")
+                    except Exception as e:
+                        st.error(f"Gagal kirim! Sheet '{nama_sheet_target}' belum ada di file Excel lo beb.")
+                else:
+                    st.toast(f"Data {prefix} Disimpan di Lokal Aplikasi (Offline)!")
+                    
         with c_hasil:
             tampilkan_kartu_hasil(bx_fix, pol_fix, hk_fix)
         return bx_fix, bj
@@ -293,46 +354,113 @@ elif st.session_state.page == 'pilih_analisa':
     if st.button("🔙 KEMBALI KE DASHBOARD", use_container_width=True): st.session_state.page = 'dashboard'; st.rerun()
 
 elif st.session_state.page == 'analisa_lab':
-    list_jam = [f"{(i % 24):02d}:00" for i in range(6, 30)]
+    # Ambil Tanggal Operasi Tambahan Khusus Menu Khusus Lab
+    col_lab1, col_lab2 = st.columns([1, 2])
+    with col_lab1:
+        tgl_lab = st.date_input("Pilih Tanggal Analisa Lab:", datetime.date(2026, 6, 1), key="tgl_analisa_lab_sheet")
+        nama_sheet_target = tgl_lab.strftime("%d%m")
+        st.info(f"Target Sheet Excel: `{nama_sheet_target}`")
+
+    list_jam = [f"{(i % 24):02d}.00" for i in range(6, 30)] # Diubah titik (.) biar pas sama kolom A Excel lo beb
+    
     if st.session_state.analisa_type == 'tetes':
         st.markdown("<h2 style='text-align:center; color:#26c4b9; font-family:Orbitron;'>🧪 ANALISA TETES</h2>", unsafe_allow_html=True)
         st.markdown('<div class="hero-container" style="display:block; padding:30px;">', unsafe_allow_html=True)
         cx, cy = st.columns([1, 2.2])
         with cx:
             jam = st.selectbox("Pilih Jam Analisa", options=list_jam)
-            bx_in = st.number_input("Brix Teramati", value=8.80); sh_in = st.number_input("Suhu", value=28.0); pol_baca = st.number_input("Pol Baca", value=11.00)
-            kor = hitung_interpolasi(sh_in, data_koreksi); bj = hitung_interpolasi(bx_in, data_bj)
-            bx_f = (bx_in + kor) * 10; pol_f = (0.286 * pol_baca) / bj * 10; hk_f = (pol_f / bx_f * 100) if bx_f > 0 else 0
+            bx_in = st.number_input("Brix Teramati", value=8.80)
+            sh_in = st.number_input("Suhu", value=28.0)
+            pol_baca = st.number_input("Pol Baca", value=11.00)
+            kor = hitung_interpolasi(sh_in, data_koreksi)
+            bj = hitung_interpolasi(bx_in, data_bj)
+            bx_f = (bx_in + kor) * 10
+            pol_f = (0.286 * pol_baca) / bj * 10
+            hk_f = (pol_f / bx_f * 100) if bx_f > 0 else 0
+            
+            if st.button("🚀 TRANSMIT DATA TETES", type="primary"):
+                if spreadsheet is not None:
+                    try:
+                        sheet_hari = spreadsheet.worksheet(nama_sheet_target)
+                        list_jam_excel = sheet_hari.col_values(1)
+                        if jam in list_jam_excel:
+                            baris_jam = list_jam_excel.index(jam) + 1
+                            # Kolom L = Gula Reduksi Tetes, Kolom W = Tetes TSAI OD sesuai mapping lo beb
+                            sheet_hari.update_acell(f"L{baris_jam}", hk_f) 
+                            st.success(f"Analisa Tetes Jam {jam} sukses tersimpan!")
+                        else: st.error("Jam tidak ditemukan di Excel!")
+                    except Exception: st.error("Sheet Tanggal belum dibuat!")
         with cy: tampilkan_kartu_hasil(bx_f, pol_f, hk_f)
         st.markdown('</div>', unsafe_allow_html=True)
+        
     elif st.session_state.analisa_type == 'od':
         st.markdown("<h2 style='text-align:center; color:#ff4b4b; font-family:Orbitron;'>🔬 OD TETES</h2>", unsafe_allow_html=True)
         st.markdown('<div class="hero-container" style="display:block; padding:30px;">', unsafe_allow_html=True)
         cx, cy = st.columns([1, 2.2])
         with cx:
             jam = st.selectbox("Pilih Jam Analisa", options=list_jam)
-            bx_od = st.number_input("Brix Teramati", value=8.80); abs_od = st.number_input("Absorbansi", value=0.418)
-            bj_od = hitung_interpolasi(bx_od, data_bj); res = (abs_od * bj_od * 500)
+            bx_od = st.number_input("Brix Teramati", value=8.80)
+            abs_od = st.number_input("Absorbansi", value=0.418)
+            bj_od = hitung_interpolasi(bx_od, data_bj)
+            res = (abs_od * bj_od * 500)
+            
+            if st.button("🚀 TRANSMIT DATA OD", type="primary"):
+                if spreadsheet is not None:
+                    try:
+                        sheet_hari = spreadsheet.worksheet(nama_sheet_target)
+                        list_jam_excel = sheet_hari.col_values(1)
+                        if jam in list_jam_excel:
+                            baris_jam = list_jam_excel.index(jam) + 1
+                            sheet_hari.update_acell(f"W{baris_jam}", res) # Kolom W Tetes OD
+                            st.success("Data OD sukses dikirim!")
+                    except Exception: st.error("Gagal koneksi sheet harian!")
         with cy: st.markdown(f'<div style="background:rgba(255,75,75,0.1); padding:40px; border-radius:20px; border:3px solid #ff4b4b; display:flex; justify-content:space-between; align-items:center;"><h1 style="color:#ff4b4b; font-family:Orbitron; margin:0; font-size:80px;">{res:.3f}</h1><p style="color:white; font-weight:bold; letter-spacing:2px;">HASIL OD</p></div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
+        
     elif st.session_state.analisa_type == 'tsai':
         st.markdown("<h2 style='text-align:center; color:#ffcc00; font-family:Orbitron;'>⚗️ TSAI TETES</h2>", unsafe_allow_html=True)
         st.markdown('<div class="hero-container" style="display:block; padding:30px;">', unsafe_allow_html=True)
         cx, cy = st.columns([1, 2.2])
         with cx:
             jam = st.selectbox("Pilih Jam Analisa", options=list_jam)
-            titran = st.number_input("Volume Titran", value=22.5); ff = st.number_input("Faktor", value=0.979)
+            titran = st.number_input("Volume Titran", value=22.5)
+            ff = st.number_input("Faktor", value=0.979)
             val = titran * ff; tsai = hitung_interpolasi(val, data_tsai) / 4
+            
+            if st.button("🚀 TRANSMIT DATA TSAI", type="primary"):
+                if spreadsheet is not None:
+                    try:
+                        sheet_hari = spreadsheet.worksheet(nama_sheet_target)
+                        list_jam_excel = sheet_hari.col_values(1)
+                        if jam in list_jam_excel:
+                            baris_jam = list_jam_excel.index(jam) + 1
+                            sheet_hari.update_acell(f"W{baris_jam}", tsai) # Kolom W TSAI Tetes
+                            st.success("Data TSAI sukses dikirim!")
+                    except Exception: st.error("Gagal koneksi sheet harian!")
         with cy: st.markdown(f'<div style="background:rgba(255,204,0,0.1); padding:40px; border-radius:20px; border:3px solid #ffcc00; display:flex; justify-content:space-between; align-items:center;"><h1 style="color:#ffcc00; font-family:Orbitron; margin:0; font-size:80px;">{tsai:.3f}</h1><p style="color:white; font-weight:bold; letter-spacing:2px;">% TSAI</p></div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
+        
     elif st.session_state.analisa_type == 'icumsa':
         st.markdown("<h2 style='text-align:center; color:#00d4ff; font-family:Orbitron;'>💎 ICUMSA GULA</h2>", unsafe_allow_html=True)
         st.markdown('<div class="hero-container" style="display:block; padding:30px;">', unsafe_allow_html=True)
         cx, cy = st.columns([1, 2.2])
         with cx:
             jam = st.selectbox("Pilih Jam Analisa", options=list_jam)
-            abs_ic = st.number_input("Absorbansi", value=0.149); bx_ic = st.number_input("Brix Gula", value=49.44)
-            bj_ic = hitung_interpolasi(bx_ic, data_bj); res = (abs_ic * 100000) / (bx_ic * 1 * bj_ic) if bx_ic > 0 else 0
+            abs_ic = st.number_input("Absorbansi", value=0.149)
+            bx_ic = st.number_input("Brix Gula", value=49.44)
+            bj_ic = hitung_interpolasi(bx_ic, data_bj)
+            res = (abs_ic * 100000) / (bx_ic * 1 * bj_ic) if bx_ic > 0 else 0
+            
+            if st.button("🚀 TRANSMIT DATA ICUMSA", type="primary"):
+                if spreadsheet is not None:
+                    try:
+                        sheet_hari = spreadsheet.worksheet(nama_sheet_target)
+                        list_jam_excel = sheet_hari.col_values(1)
+                        if jam in list_jam_excel:
+                            baris_jam = list_jam_excel.index(jam) + 1
+                            sheet_hari.update_acell(f"AE{baris_jam}", res) # Kolom AE = ICUMSA awal memanjang ke kanan
+                            st.success("Data ICUMSA sukses dikirim!")
+                    except Exception: st.error("Gagal koneksi sheet harian!")
         with cy: st.markdown(f'<div style="background:rgba(0,212,255,0.1); padding:40px; border-radius:20px; border:3px solid #00d4ff; display:flex; justify-content:space-between; align-items:center;"><h1 style="color:#00d4ff; font-family:Orbitron; margin:0; font-size:80px;">{res:.2f}</h1><p style="color:white; font-weight:bold; letter-spacing:2px;">IU (ICUMSA)</p></div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
